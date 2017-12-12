@@ -20,7 +20,7 @@ target_link_libraries(project-that-needs-pelib pelib)
 ## Requirements
 
 * A compiler supporting C++14
- * On Windows, only Microsoft Visual C++ is supported (version >= Visual Studio 2015).
+  * On Windows, only Microsoft Visual C++ is supported (version >= Visual Studio 2015).
 * CMake (version >= 3.6)
 
 ## Build and Installation
