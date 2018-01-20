@@ -1,0 +1,42 @@
+language: cpp
+
+matrix:
+  fast_finish: true
+  include:
+    - os: linux
+      dist: trusty
+      compiler: gcc-4.9
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - build-essential
+            - gcc-4.9
+            - g++-4.9
+            - cmake
+      env:
+        - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9 && NPROC=$(nproc)"
+    - os: osx
+      osx_image: xcode8.3
+      env:
+        - MATRIX_EVAL="NPROC=$(sysctl -n hw.physicalcpu)"
+
+before_install:
+  - eval "${MATRIX_EVAL}"
+
+script:
+  - mkdir build && cd build
+  - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$(pwd)/install" ..
+  - cmake --build . -- -j $NPROC
+
+branches:
+  only:
+    # Pushes and PRs to the master branch.
+    - master
+    # Version tags.
+    - /^v?\d+\.\d+.*$/
+
+notifications:
+  email:
+    on_success: never
