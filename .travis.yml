@@ -34,8 +34,6 @@ branches:
   only:
     # Pushes and PRs to the master branch.
     - master
-    # TODO: temp
-    - travis-appveyor-ci
     # Version tags.
     - /^v?\d+\.\d+.*$/
 

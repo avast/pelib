@@ -1,5 +1,8 @@
 ## PeLib
 
+[![Travis CI build status](https://travis-ci.org/avast-tl/pelib.svg?branch=master)](https://travis-ci.org/avast-tl/pelib)
+[![AppVeyor build status](https://ci.appveyor.com/api/projects/status/github/PeterMatula/pelib?branch=master&svg=true)](https://ci.appveyor.com/project/PeterMatula/pelib)
+
 PE file manipulation library. The [original](http://www.pelib.com/index.php) project by Sebastian Porst was further modified by Avast Software to:
 * Modify directory structure, i.e. split sources and headers.
 * Fix bugs.
