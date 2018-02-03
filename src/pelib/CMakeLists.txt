@@ -1,6 +1,4 @@
-
 if(NOT TARGET pelib)
-
 	set(PELIB_SOURCES
 		BoundImportDirectory.cpp
 		CoffSymbolTable.cpp
@@ -22,5 +20,4 @@ if(NOT TARGET pelib)
 
 	add_library(pelib STATIC ${PELIB_SOURCES})
 	target_include_directories(pelib SYSTEM PUBLIC ${PROJECT_SOURCE_DIR}/include/)
-
 endif()
