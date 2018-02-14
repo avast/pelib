@@ -26,6 +26,29 @@ before_build:
 build_script:
   - cmd: cmake --build . --config %configuration% -- /m
 
+branches:
+  only:
+    # Pushes and PRs to the master branch.
+    - master
+    # Version tags.
+    - /^v?\d+\.\d+.*$/
+
+skip_commits:
+  files:
+    # Exact files.
+    - .travis.yml
+    - MIT_LICENSE
+    - ZLIB_LICENSE
+    # All .gitignore files within repository.
+    - '**/.gitignore'
+    # All *.md files within repository.
+    - '**/*.md'
+    # All README files within repository.
+    - '**/README'
+    - '**/README.txt'
+    - '**/readme'
+    - '**/readme.txt'
+
 notifications:
   - provider: Email
     to:
