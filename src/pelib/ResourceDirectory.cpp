@@ -284,7 +284,6 @@ namespace PeLib
 		return uiElementRva;
 	}
 
-
 	ResourceElement::ResourceElement() : uiElementRva(0)
 	{
 
@@ -982,7 +981,6 @@ namespace PeLib
 	{
 		header.NumberOfIdEntries = value;
 	}
-
 
 /*	/// Returns the size of a resource node.
 	unsigned int ResourceNode::size() const

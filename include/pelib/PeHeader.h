@@ -1368,7 +1368,6 @@ namespace PeLib
 		return ERROR_NONE;
 	}
 
-
 	/**
 	* Overwrites a section's data.
 	* @param wSecnr Number of the section which will be overwritten.
@@ -1489,7 +1488,6 @@ namespace PeLib
 	{
 		return m_inthHeader.FileHeader.Machine;
 	}
-
 
 	/**
 	* Returns the file's number of sections as defined in the header. Note that this value can be different

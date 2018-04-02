@@ -82,7 +82,6 @@ namespace PeLib
 	 		return false;
 		}
 
-
 		public:
 
 		  /// Add a function to the import directory.

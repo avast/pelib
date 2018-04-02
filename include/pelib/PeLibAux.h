@@ -80,7 +80,6 @@ namespace PeLib
 		#error You need to change some typedefs. Please read the PeLib documentation.
 	#endif
 
-
 /*	enum bits {BITS_BYTE = 8, BITS_WORD = 16, BITS_DWORD = 32};
 
 	template<bits value>
@@ -516,7 +515,6 @@ namespace PeLib
 	{
 		return size + v.size();
 	}
-
 
 	struct PELIB_IMAGE_DOS_HEADER
 	{
@@ -1174,7 +1172,6 @@ namespace PeLib
     enum Section_Field {SectionName, VirtualSize, VirtualAddress, SizeOfRawData, PointerToRawData, PointerToRelocations,
                         PointerToLinenumbers, NumberOfRelocations, NumberOfLinenumbers, SectionCharacteristics};
 */
-
 
 	const unsigned int PELIB_IMAGE_SIZEOF_COFF_SYMBOL = 18;
 	const std::size_t COFF_SYMBOL_NAME_MAX_LENGTH = 96;
