@@ -11,7 +11,7 @@
 
 namespace PeLib
 {
-	CoffSymbolTable::CoffSymbolTable() : stringTableSize(0), numberOfStoredSymbols(0)
+	CoffSymbolTable::CoffSymbolTable() : stringTableSize(0), numberOfStoredSymbols(0), m_ldrError(LDR_ERROR_NONE)
 	{
 
 	}
@@ -75,16 +75,21 @@ namespace PeLib
 	int CoffSymbolTable::read(const std::string& strFilename, unsigned int uiOffset, unsigned int uiSize)
 	{
 		std::ifstream ifFile(strFilename, std::ios::binary);
-		if (!ifFile)
+        if (!ifFile)
 		{
 			return ERROR_OPENING_FILE;
 		}
 
-		const std::size_t ulFileSize = fileSize(ifFile);
-		const std::size_t stringTableOffset = uiOffset + uiSize;
-		if (stringTableOffset >= ulFileSize || uiOffset >= ulFileSize)
+        // Check for overflow
+        if ((uiOffset + uiSize) < uiOffset)
+            setLoaderError(LDR_ERROR_COFF_POS_OVERFLOW);
+
+        std::uint64_t ulFileSize = fileSize(ifFile);
+        std::uint64_t stringTableOffset = uiOffset + uiSize;
+		if (uiOffset >= ulFileSize || stringTableOffset >= ulFileSize)
 		{
-			return ERROR_INVALID_FILE;
+            setLoaderError(LDR_ERROR_COFF_POS_OVERFLOW);
+            return ERROR_INVALID_FILE;
 		}
 
 		ifFile.seekg(uiOffset, std::ios::beg);
@@ -101,9 +106,10 @@ namespace PeLib
 			strBuf >> stringTableSize;
 		}
 
-		if (ifFile.gcount() < 4)
+        stringTableSize = 0;
+        if (ifFile.gcount() < 4)
 		{
-			stringTableSize = ifFile.gcount();
+			stringTableSize = (std::size_t)ifFile.gcount();
 		}
 		else if (ifFile.gcount() == 4 && stringTableSize < 4)
 		{
@@ -112,7 +118,7 @@ namespace PeLib
 
 		if (stringTableSize > ulFileSize || uiOffset + stringTableSize > ulFileSize)
 		{
-			stringTableSize = ulFileSize - uiOffset;
+			stringTableSize = (std::size_t)(ulFileSize - uiOffset);
 		}
 
 		// read string table
@@ -126,6 +132,19 @@ namespace PeLib
 
 		return ERROR_NONE;
 	}
+
+    LoaderError CoffSymbolTable::loaderError() const
+    {
+        return m_ldrError;
+    }
+
+    void CoffSymbolTable::setLoaderError(LoaderError ldrError)
+    {
+        if (m_ldrError == LDR_ERROR_NONE)
+        {
+            m_ldrError = ldrError;
+        }
+    }
 
 	std::size_t CoffSymbolTable::getSizeOfStringTable() const
 	{

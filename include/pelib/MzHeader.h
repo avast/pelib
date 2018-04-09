@@ -26,14 +26,17 @@ namespace PeLib
 	class MzHeader
 	{
 		private:
-		  PELIB_IMAGE_DOS_HEADER m_idhHeader; ///< Stores all MZ header information.
-		  std::string m_headerString; ///< MZ header in string representation.
+		  PELIB_IMAGE_DOS_HEADER m_idhHeader;       ///< Stores all MZ header information.
+		  std::string m_headerString;               ///< MZ header in string representation.
+          LoaderError m_ldrError;
 
 		  /// Reads data from an InputBuffer into a MZ header struct.
 		  void read(InputBuffer& ibBuffer);
 
 		  /// Offset of the MZ header in the original file.
 		  unsigned int originalOffset;
+
+          void setLoaderError(LoaderError ldrError);
 
 		public:
 
@@ -47,6 +50,9 @@ namespace PeLib
 		  bool isValid() const; // EXPORT
 
 		  bool isValid(Field field) const; // EXPORT _field
+
+          /// Returns loader error for the header
+          LoaderError loaderError() const;
 
 		  /// Corrects the current MZ header.
 		  void makeValid(); // EXPORT

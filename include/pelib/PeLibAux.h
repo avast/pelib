@@ -41,6 +41,48 @@ namespace PeLib
 		ERROR_COFF_SYMBOL_TABLE_DOES_NOT_EXIST = -10
 	};
 
+    enum LoaderError
+    {
+        LDR_ERROR_NONE = 0,                         // No error
+        LDR_ERROR_FILE_TOO_BIG,                     // The file is larger than 0xFFFFFFFF bytes
+        LDR_ERROR_E_LFANEW_UNALIGNED,               // The IMAGE_DOS_HEADER::e_lfanew is not aligned to 4
+        LDR_ERROR_E_LFANEW_OUT_OF_FILE,             // The IMAGE_DOS_HEADER::e_lfanew is out of (lower 4 GB of) the file
+        LDR_ERROR_NTHEADER_OUT_OF_FILE,             // The NT header is out of the file
+        LDR_ERROR_NO_NT_SIGNATURE,                  // Missing NT signature (IMAGE_NT_SIGNATURE)
+        LDR_ERROR_FILE_HEADER_INVALID,              // Invalid IMAGE_FILE_HEADER::Machine or IMAGE_FILE_HEADER::SizeOfOptionalHeader
+        LDR_ERROR_IMAGE_NON_EXECUTABLE,             // Missing IMAGE_FILE_EXECUTABLE_IMAGE in IMAGE_FILE_HEADER::Characteristics
+        LDR_ERROR_NO_OPTHDR_MAGIC,                  // Invalid IMAGE_OPTIONAL_HEADER::Magic
+        LDR_ERROR_SIZE_OF_HEADERS_ZERO,             // IMAGE_OPTIONAL_HEADER::SizeOfHeaders is zero
+        LDR_ERROR_FILE_ALIGNMENT_ZERO,              // Zero value of IMAGE_OPTIONAL_HEADER::FileAlignment
+        LDR_ERROR_FILE_ALIGNMENT_NOT_POW2,          // IMAGE_OPTIONAL_HEADER::FileAlignment is not power of two
+        LDR_ERROR_SECTION_ALIGNMENT_ZERO,           // Zero value of IMAGE_OPTIONAL_HEADER::SectionAlignment
+        LDR_ERROR_SECTION_ALIGNMENT_NOT_POW2,       // IMAGE_OPTIONAL_HEADER::SectionAlignment is not power of two
+        LDR_ERROR_SECTION_ALIGNMENT_TOO_SMALL,      // IMAGE_OPTIONAL_HEADER::SectionAlignment is less than IMAGE_OPTIONAL_HEADER::FileAlignment
+        LDR_ERROR_SECTION_ALIGNMENT_INVALID,        // IMAGE_OPTIONAL_HEADER::SectionAlignment must be equal to IMAGE_OPTIONAL_HEADER::FileAlignment if (FileAlignment < 512)
+        LDR_ERROR_SIZE_OF_IMAGE_TOO_BIG,            // IMAGE_OPTIONAL_HEADER::SizeOfImage is too big
+        LDR_ERROR_INVALID_MACHINE32,                // Invalid IMAGE_FILE_HEADER::Machine for IMAGE_OPTIONAL_HEADER::Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC
+        LDR_ERROR_INVALID_MACHINE64,                // Invalid IMAGE_FILE_HEADER::Machine for IMAGE_OPTIONAL_HEADER::Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC
+        LDR_ERROR_SIZE_OF_HEADERS_INVALID,          // IMAGE_OPTIONAL_HEADER::SizeOfHeaders is greater than IMAGE_OPTIONAL_HEADER::SizeOfImage
+        LDR_ERROR_SIZE_OF_OPTHDR_NOT_ALIGNED,       // IMAGE_OPTIONAL_HEADER::SizeOfHeaders is not aligned to 8 (64-bit Windows only
+        LDR_ERROR_SIZE_OF_IMAGE_PTES_ZERO,          // Number of PTEs for the image is zero
+        LDR_ERROR_IMAGE_BASE_NOT_ALIGNED,           // IMAGE_OPTIONAL_HEADER::ImageBase is not aligned
+        LDR_ERROR_SIZE_OF_IMAGE_ZERO,               // Number of PTEs for the entire image is zero
+        LDR_ERROR_RAW_DATA_OVERFLOW,                // Overflow in section's raw data size
+        LDR_ERROR_SECTION_HEADERS_OUT_OF_IMAGE,     // Section headers are out of the image
+        LDR_ERROR_SECTION_HEADERS_OVERFLOW,         // Image with single subsection: size of headers is near the end of range
+        LDR_ERROR_SECTION_SIZE_MISMATCH,            // Image with single subsection: virtual values with rawdata values don't match
+        LDR_ERROR_INVALID_SECTION_VA,               // Images with normal sections: invalid virtual address of a section
+        LDR_ERROR_INVALID_SECTION_VSIZE,            // Images with normal sections: invalid virtual size of a section
+        LDR_ERROR_INVALID_SECTION_RAWSIZE,          // Images with normal sections: invalid raw data size
+        LDR_ERROR_INVALID_SIZE_OF_IMAGE,            // IMAGE_OPTIONAL_HEADER::SizeOfImage doesn't match the (header+sections)
+        LDR_ERROR_FILE_IS_CUT,                      // The file is cut
+
+        LDR_ERROR_COFF_POS_OVERFLOW,                // The position of the COFF debug info overflowed
+        LDR_ERROR_COFF_POS_OUT_OF_FILE,             // The position of the COFF debug info is out of the file
+
+        LDR_ERROR_MAX
+    };
+
 	class PeFile;
 
 // It's necessary to make sure that a byte has 8 bits and that the platform has a 8 bit type,
@@ -133,7 +175,15 @@ namespace PeLib
 
 	const word PELIB_IMAGE_DOS_SIGNATURE = 0x5A4D;
 
+    const dword PELIB_PAGE_SIZE = 0x1000;
+
+    const dword PELIB_PAGE_SIZE_SHIFT = 12;
+
+    const dword PELIB_SIZE_64KB = 0x10000;
+
 	const dword PELIB_IMAGE_NT_SIGNATURE = 0x00004550;
+
+    const dword PELIB_MM_SIZE_OF_LARGEST_IMAGE = 0x77000000;
 
 	template<int bits>
 	struct PELIB_IMAGE_ORDINAL_FLAGS;
@@ -1144,10 +1194,13 @@ namespace PeLib
 	    static unsigned int size(){return 40;}
 	};
 
-	unsigned int fileSize(const std::string& filename);
-	unsigned int fileSize(std::ifstream& file);
-	unsigned int fileSize(std::ofstream& file);
-	unsigned int fileSize(std::fstream& file);
+    std::uint32_t BytesToPages(std::uint32_t ByteSize);
+    std::uint32_t AlignToSize(std::uint32_t ByteSize, std::uint32_t AlignSize);
+
+    std::uint64_t fileSize(const std::string& filename);
+    std::uint64_t fileSize(std::ifstream& file);
+    std::uint64_t fileSize(std::ofstream& file);
+    std::uint64_t fileSize(std::fstream& file);
 	unsigned int alignOffset(unsigned int uiOffset, unsigned int uiAlignment);
 	std::size_t getStringFromFileOffset(std::ifstream &ifFile, std::string &result, std::size_t fileOffset, std::size_t maxLength = 0);
 

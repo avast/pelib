@@ -81,7 +81,7 @@ namespace PeLib
 	int RelocationsDirectoryT<bits>::read(const std::string& strFilename, const PeHeaderT<bits>& peHeader)
 	{
 		std::ifstream ifFile(strFilename.c_str(), std::ios::binary);
-		unsigned int uiFileSize = fileSize(ifFile);
+        std::uint64_t ulFileSize = fileSize(ifFile);
 
 		if (!ifFile)
 		{
@@ -91,9 +91,9 @@ namespace PeLib
 		unsigned int uiOffset = peHeader.rvaToOffset(peHeader.getIddBaseRelocRva());
 		unsigned int uiSize = peHeader.getIddBaseRelocSize();
 
-		// If uiSize is big enough it can overflow after addition with uiOffset, uiFileSize < uiOffset + uiSize can be true,
+		// If uiSize is big enough it can overflow after addition with uiOffset, ulFileSize < uiOffset + uiSize can be true,
 		//   even though it should be false.
-		if ((uiFileSize < uiSize) || (uiFileSize < uiOffset + uiSize))
+		if ((ulFileSize < uiSize) || (ulFileSize < uiOffset + uiSize))
 		{
 			return ERROR_INVALID_FILE;
 		}

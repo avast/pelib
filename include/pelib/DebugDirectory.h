@@ -104,7 +104,7 @@ namespace PeLib
 	int DebugDirectoryT<bits>::read(const std::string& strFilename, const PeHeaderT<bits>& peHeader)
 	{
 		std::ifstream ifFile(strFilename.c_str(), std::ios::binary);
-		unsigned int ulFileSize = fileSize(ifFile);
+        std::uint64_t ulFileSize = fileSize(ifFile);
 
 		if (!ifFile)
 		{

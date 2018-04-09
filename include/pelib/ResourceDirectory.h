@@ -845,15 +845,15 @@ namespace PeLib
 			return ERROR_OPENING_FILE;
 		}
 
-		unsigned int uiFileSize = fileSize(ifFile);
-		if (uiFileSize < uiOffset)
+        std::uint64_t ulFileSize = fileSize(ifFile);
+		if (ulFileSize < uiOffset)
 		{
 			return ERROR_INVALID_FILE;
 		}
 
 		ifFile.seekg(uiOffset, std::ios::beg);
 
-		return m_rnRoot.read(ifFile, uiOffset, 0, uiResDirRva, uiFileSize, this);
+		return m_rnRoot.read(ifFile, uiOffset, 0, uiResDirRva, ulFileSize, this);
 	}
 }
 

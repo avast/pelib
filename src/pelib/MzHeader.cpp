@@ -56,7 +56,7 @@ namespace PeLib
 		ibBuffer >> m_idhHeader.e_lfanew;
 	}
 
-	MzHeader::MzHeader(): originalOffset(0) {}
+	MzHeader::MzHeader(): originalOffset(0), m_ldrError() {}
 
 	/**
 	* Tests if the currently loaded MZ header is a valid MZ header.
@@ -81,6 +81,20 @@ namespace PeLib
         {
             return true;
         }
+    }
+
+    void MzHeader::setLoaderError(LoaderError ldrError)
+    {
+        // Do not override an existing loader error
+        if (m_ldrError == LDR_ERROR_NONE)
+        {
+            m_ldrError = ldrError;
+        }
+    }
+
+    LoaderError MzHeader::loaderError() const
+    {
+        return m_ldrError;
     }
 
 	/**
@@ -119,10 +133,17 @@ namespace PeLib
 			return ERROR_OPENING_FILE;
 		}
 
-		if (fileSize(ifFile) < PELIB_IMAGE_DOS_HEADER::size())
+        std::uint64_t ulFileSize = fileSize(ifFile);
+        if (ulFileSize < PELIB_IMAGE_DOS_HEADER::size())
 		{
 			return ERROR_INVALID_FILE;
 		}
+
+        // Windows loader refuses to load any file which is larger than 0xFFFFFFFF
+        if ((ulFileSize >> 32) != 0)
+        {
+            setLoaderError(LDR_ERROR_FILE_TOO_BIG);
+        }
 
 		ifFile.seekg(0, std::ios::beg);
 
@@ -138,7 +159,16 @@ namespace PeLib
 
 		InputBuffer ibBuffer(vBuffer);
 		read(ibBuffer);
-		return ERROR_NONE;
+		
+        // For 64-bit systems, the e_lfanew must be aligned to 4
+        if (m_idhHeader.e_lfanew & 3)
+            setLoaderError(LDR_ERROR_E_LFANEW_UNALIGNED);
+
+        // The offset of PE header must not be out of file
+        if (m_idhHeader.e_lfanew > (std::uint32_t)ulFileSize)
+            setLoaderError(LDR_ERROR_E_LFANEW_OUT_OF_FILE);
+
+        return ERROR_NONE;
 	}
 
 	/**

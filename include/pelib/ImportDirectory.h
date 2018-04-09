@@ -478,10 +478,10 @@ namespace PeLib
 			return ERROR_OPENING_FILE;
 		}
 
-		unsigned int uiFileSize = fileSize(ifFile);
+        std::uint64_t ulFileSize = fileSize(ifFile);
 		unsigned int uiOffset = peHeader.rvaToOffset(peHeader.getIddImportRva());
 
-		if (uiFileSize < uiOffset)
+		if (ulFileSize < uiOffset)
 		{
 			return ERROR_INVALID_FILE;
 		}
@@ -494,9 +494,9 @@ namespace PeLib
 		unsigned int uiDescOffset = uiOffset;
 
 		// Read and store all descriptors
-		while (uiDescOffset < uiFileSize)
+		while (uiDescOffset < ulFileSize)
 		{
-			if (uiDescOffset + PELIB_IMAGE_IMPORT_DESCRIPTOR::size() > uiFileSize)
+			if (uiDescOffset + PELIB_IMAGE_IMPORT_DESCRIPTOR::size() > ulFileSize)
 			{
 				break;
 			}
@@ -563,7 +563,7 @@ namespace PeLib
 
 			do
 			{
-				if (uiFileSize < peHeader.rvaToOffset(uiVaoft) + sizeof(tdCurr.itd.Ordinal))
+				if (ulFileSize < peHeader.rvaToOffset(uiVaoft) + sizeof(tdCurr.itd.Ordinal))
 				{
 					return ERROR_INVALID_FILE;
 				}
@@ -597,7 +597,7 @@ namespace PeLib
 
 			do
 			{
-				if (uiFileSize < peHeader.rvaToOffset(uiVaoft) + sizeof(tdCurr.itd.Ordinal))
+				if (ulFileSize < peHeader.rvaToOffset(uiVaoft) + sizeof(tdCurr.itd.Ordinal))
 				{
 					return ERROR_INVALID_FILE;
 				}

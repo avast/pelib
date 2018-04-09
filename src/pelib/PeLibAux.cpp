@@ -68,38 +68,48 @@ namespace PeLib
     return (uiOffset % uiAlignment) ? uiOffset + (uiAlignment - uiOffset % uiAlignment) : uiOffset;
   }
 
-  unsigned int fileSize(const std::string& filename)
+  std::uint32_t AlignToSize(std::uint32_t ByteSize, std::uint32_t AlignSize)
   {
-    std::fstream file(filename.c_str());
-    file.seekg(0, std::ios::end);
-    return file.tellg();
+      return ((ByteSize + (AlignSize - 1)) & ~(AlignSize - 1));
   }
 
-  unsigned int fileSize(std::ifstream& file)
+  std::uint32_t BytesToPages(std::uint32_t ByteSize)
   {
-    unsigned int oldpos = file.tellg();
-    file.seekg(0, std::ios::end);
-    unsigned int filesize = file.tellg();
-    file.seekg(oldpos, std::ios::beg);
-    return filesize;
+      return (ByteSize >> PELIB_PAGE_SIZE_SHIFT) + ((ByteSize & (PELIB_PAGE_SIZE - 1)) != 0);
   }
 
-  unsigned int fileSize(std::fstream& file)
+  std::uint64_t fileSize(const std::string& filename)
   {
-    unsigned int oldpos = file.tellg();
-    file.seekg(0, std::ios::end);
-    unsigned int filesize = file.tellg();
-    file.seekg(oldpos, std::ios::beg);
-    return filesize;
+      std::fstream file(filename.c_str());
+      file.seekg(0, std::ios::end);
+      return file.tellg();
   }
 
-  unsigned int fileSize(std::ofstream& file)
+  std::uint64_t fileSize(std::ifstream& file)
   {
-    unsigned int oldpos = file.tellp();
-    file.seekp(0, std::ios::end);
-    unsigned int filesize = file.tellp();
-    file.seekp(oldpos, std::ios::beg);
-    return filesize;
+      std::streamoff oldpos = file.tellg();
+      file.seekg(0, std::ios::end);
+      std::streamoff filesize = file.tellg();
+      file.seekg(oldpos, std::ios::beg);
+      return filesize;
+  }
+
+  std::uint64_t fileSize(std::fstream& file)
+  {
+      std::streamoff oldpos = file.tellg();
+      file.seekg(0, std::ios::end);
+      std::streamoff filesize = file.tellg();
+      file.seekg(oldpos, std::ios::beg);
+      return filesize;
+  }
+
+  std::uint64_t fileSize(std::ofstream& file)
+  {
+      std::streamoff oldpos = file.tellp();
+      file.seekp(0, std::ios::end);
+      std::streamoff filesize = file.tellp();
+      file.seekp(oldpos, std::ios::beg);
+      return filesize;
   }
 
   std::size_t getStringFromFileOffset(std::ifstream &ifFile, std::string &result, std::size_t fileOffset, std::size_t maxLength/* = 0*/)
@@ -289,9 +299,43 @@ namespace PeLib
   **/
   unsigned int getFileType(const std::string strFilename)
   {
+      PeFile32 pef(strFilename);
+
+      // Attempt to read the DOS file header.
+      if (pef.readMzHeader() != ERROR_NONE)
+      {
+          return PEFILE_UNKNOWN;
+      }
+
+      // Verify the DOS header
+      if (!pef.mzHeader().isValid())
+      {
+          return PEFILE_UNKNOWN;
+      }
+
+      // Read PE header. Note that at this point, we read the header as if it was 32-bit PE file
+      if (pef.readPeHeader() != ERROR_NONE)
+      {
+          return PEFILE_UNKNOWN;
+      }
+
+      // Pick the proper file type based on the machine value
+      switch (pef.peHeader().getMachine())
+      {
+          case PELIB_IMAGE_FILE_MACHINE_AMD64:
+          case PELIB_IMAGE_FILE_MACHINE_IA64:
+              return PEFILE64;
+
+          case PELIB_IMAGE_FILE_MACHINE_I386:
+              return PEFILE32;
+
+          default:
+              return PEFILE_UNKNOWN;
+      }
+
+/*
     word machine, magic;
 
-    PeFile32 pef(strFilename);
     if (pef.readMzHeader() != ERROR_NONE)
     {
       return PEFILE_UNKNOWN;
@@ -318,7 +362,7 @@ namespace PeLib
     {
       return PEFILE32;
     }
-
+*/
 /*
     // jk 2012-02-20: original code
     if (machine == PELIB_IMAGE_FILE_MACHINE_I386 && magic == PELIB_IMAGE_NT_OPTIONAL_HDR32_MAGIC)
