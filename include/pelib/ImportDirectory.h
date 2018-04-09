@@ -53,7 +53,7 @@ namespace PeLib
 		// That's why the function definition is here.
 		/// Tests if a certain function is imported.
 		template<typename T> bool hasFunction(std::string strFilename, T value, bool(PELIB_THUNK_DATA<bits>::* comp)(T) const) const
-	    {
+		{
 			ConstImpDirFileIterator FileIter = m_vOldiid.begin();
 			ConstImpDirFileIterator EndIter = m_vOldiid.end();
 
@@ -478,7 +478,7 @@ namespace PeLib
 			return ERROR_OPENING_FILE;
 		}
 
-        std::uint64_t ulFileSize = fileSize(ifFile);
+		std::uint64_t ulFileSize = fileSize(ifFile);
 		unsigned int uiOffset = peHeader.rvaToOffset(peHeader.getIddImportRva());
 
 		if (ulFileSize < uiOffset)
@@ -754,8 +754,8 @@ namespace PeLib
 			// store the recalculated values
 			if (fixEntries)
 			{
-			    m_vNewiid[i].impdesc.OriginalFirstThunk = dwPoft;
-			    m_vNewiid[i].impdesc.Name = dwPdll;
+				m_vNewiid[i].impdesc.OriginalFirstThunk = dwPoft;
+				m_vNewiid[i].impdesc.Name = dwPdll;
 			}
 
 			dllsize += static_cast<unsigned int>(m_vNewiid[i].name.size()) + 1;

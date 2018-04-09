@@ -115,8 +115,8 @@ namespace PeLib
 		  virtual int readDelayImportDirectory() = 0; // EXPORT
 		  /// Reads security directory of the current file.
 		  virtual int readSecurityDirectory() = 0; // EXPORT
-          /// Returns a loader error, if there was any
-          virtual LoaderError loaderError() const = 0;
+		  /// Returns a loader error, if there was any
+		  virtual LoaderError loaderError() const = 0;
 
 		  virtual unsigned int getBits() const = 0;
 
@@ -206,8 +206,8 @@ namespace PeLib
 		  int readDelayImportDirectory() ;
 		  /// Reads the security directory of the current file.
 		  int readSecurityDirectory() ;
-          /// Returns a loader error, if there was any
-          LoaderError loaderError() const;
+		  /// Returns a loader error, if there was any
+		  LoaderError loaderError() const;
 
 		  unsigned int getBits() const
 		  {
@@ -643,7 +643,7 @@ namespace PeLib
 	template<int bits>
 	int PeFileT<bits>::readDelayImportDirectory()
 	{
-        // Note: Delay imports can have arbitrary size and Windows loader will still load them
+		// Note: Delay imports can have arbitrary size and Windows loader will still load them
 		if (peHeader().calcNumberOfRvaAndSizes() >= 14 && peHeader().getIddDelayImportRva() /* && peHeader().getIddDelayImportSize() */)
 		{
 			return delayImports().read(getFileName(), peHeader());
@@ -662,26 +662,26 @@ namespace PeLib
 		return ERROR_DIRECTORY_DOES_NOT_EXIST;
 	}
 
-    // Returns an error code indicating loader problem. We check every part of the PE file
-    // for possible loader problem. If anything wrong was found, we report it
-    template<int bits>
-    LoaderError PeFileT<bits>::loaderError() const
-    {
-        LoaderError ldrError;
+	// Returns an error code indicating loader problem. We check every part of the PE file
+	// for possible loader problem. If anything wrong was found, we report it
+	template<int bits>
+	LoaderError PeFileT<bits>::loaderError() const
+	{
+		LoaderError ldrError;
 
-        // Was there a problem in the DOS header?
-        ldrError = MzHeader().loaderError();
-        if (ldrError != LDR_ERROR_NONE)
-            return ldrError;
+		// Was there a problem in the DOS header?
+		ldrError = MzHeader().loaderError();
+		if (ldrError != LDR_ERROR_NONE)
+			return ldrError;
 
-        // Was there a problem in the NT headers?
-        ldrError = peHeader().loaderError();
-        if (ldrError != LDR_ERROR_NONE)
-            return ldrError;
+		// Was there a problem in the NT headers?
+		ldrError = peHeader().loaderError();
+		if (ldrError != LDR_ERROR_NONE)
+			return ldrError;
 
-        // Nothing wrond found
-        return LDR_ERROR_NONE;
-    }
+		// Nothing wrond found
+		return LDR_ERROR_NONE;
+	}
 }
 
 #endif

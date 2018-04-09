@@ -106,14 +106,14 @@ namespace PeLib
 	int TlsDirectory<bits>::read(const std::string& strFilename, const PeHeaderT<bits> &peHeader)
 	{
 		std::ifstream ifFile(strFilename.c_str(), std::ios::binary);
-        std::uint64_t ulFileSize = fileSize(ifFile);
+		std::uint64_t ulFileSize = fileSize(ifFile);
 
 		if (!ifFile)
 		{
 			return ERROR_OPENING_FILE;
 		}
 
-        std::uint64_t uiOffset = peHeader.rvaToOffset(peHeader.getIddTlsRva());
+		std::uint64_t uiOffset = peHeader.rvaToOffset(peHeader.getIddTlsRva());
 		unsigned int uiSize = peHeader.getIddTlsSize();
 
 		if (ulFileSize < uiOffset + uiSize)

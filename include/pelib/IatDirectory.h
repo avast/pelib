@@ -77,9 +77,9 @@ namespace PeLib
 			return ERROR_OPENING_FILE;
 		}
 
-        std::uint64_t ulFileSize = fileSize(ifFile);
-        std::uint64_t dwOffset = peHeader.rvaToOffset(peHeader.getIddIatRva());
-        std::uint64_t dwSize = peHeader.getIddIatSize();
+		std::uint64_t ulFileSize = fileSize(ifFile);
+		std::uint64_t dwOffset = peHeader.rvaToOffset(peHeader.getIddIatRva());
+		std::uint64_t dwSize = peHeader.getIddIatSize();
 
 		if (ulFileSize <= dwOffset)
 		{

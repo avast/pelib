@@ -49,26 +49,26 @@ namespace PeLib
 				}
 
 				std::uint64_t ulFileSize = fileSize(ifFile);
-                std::uint64_t uiOffset = peHeader.rvaToOffset(peHeader.getIddDelayImportRva());
+				std::uint64_t uiOffset = peHeader.rvaToOffset(peHeader.getIddDelayImportRva());
 				if (uiOffset >= ulFileSize)
 				{
 					return ERROR_INVALID_FILE;
 				}
 
-                PELIB_IMAGE_DELAY_IMPORT_DIRECTORY_RECORD<bits> rec;
-                std::vector<unsigned char> dump;
+				PELIB_IMAGE_DELAY_IMPORT_DIRECTORY_RECORD<bits> rec;
+				std::vector<unsigned char> dump;
 				dump.resize(PELIB_IMAGE_SIZEOF_DELAY_IMPORT_DIRECTORY_RECORD);
 
-                // Keep loading until we encounter an entry filles with zeros
-                for(std::size_t i = 0;; i += PELIB_IMAGE_SIZEOF_DELAY_IMPORT_DIRECTORY_RECORD)
-                {
-                    InputBuffer inputbuffer(dump);
+				// Keep loading until we encounter an entry filles with zeros
+				for(std::size_t i = 0;; i += PELIB_IMAGE_SIZEOF_DELAY_IMPORT_DIRECTORY_RECORD)
+				{
+					InputBuffer inputbuffer(dump);
 
-                    // Read the n-th import sdirectory entry
-                    if (!ifFile.seekg(uiOffset + i, std::ios::beg))
-                        break;
-                    if (!ifFile.read(reinterpret_cast<char*>(dump.data()), PELIB_IMAGE_SIZEOF_DELAY_IMPORT_DIRECTORY_RECORD))
-                        break;
+					// Read the n-th import sdirectory entry
+					if (!ifFile.seekg(uiOffset + i, std::ios::beg))
+						break;
+					if (!ifFile.read(reinterpret_cast<char*>(dump.data()), PELIB_IMAGE_SIZEOF_DELAY_IMPORT_DIRECTORY_RECORD))
+						break;
 
 					rec.init();
 					inputbuffer >> rec.Attributes;

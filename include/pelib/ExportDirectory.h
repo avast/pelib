@@ -145,7 +145,7 @@ namespace PeLib
 	/**
 	* @param strFilename Name of the file.
 	* @param peHeader A valid PE header which is necessary because some RVA calculations need to be done.
-    * \todo: Proper use of InputBuffer
+	* \todo: Proper use of InputBuffer
 	**/
 	template <int bits>
 	int ExportDirectoryT<bits>::read(const std::string& strFilename, const PeHeaderT<bits>& peHeader)
@@ -157,7 +157,7 @@ namespace PeLib
 			return ERROR_OPENING_FILE;
 		}
 
-        std::uint64_t ulFileSize = fileSize(ifFile);
+		std::uint64_t ulFileSize = fileSize(ifFile);
 		unsigned int dirRva = peHeader.getIddExportRva();
 		unsigned int dirOffset = peHeader.rvaToOffset(dirRva);
 		if (ulFileSize < dirOffset + PELIB_IMAGE_EXPORT_DIRECTORY::size())
