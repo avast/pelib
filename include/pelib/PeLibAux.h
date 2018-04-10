@@ -83,6 +83,12 @@ namespace PeLib
 		LDR_ERROR_MAX
 	};
 
+    struct LoaderErrorString
+    {
+        const char * loaderErrorString;
+        const char * loaderErrorUserFriendly;
+    };
+
 	class PeFile;
 
 // It's necessary to make sure that a byte has 8 bits and that the platform has a 8 bit type,
@@ -1203,6 +1209,8 @@ namespace PeLib
 	std::uint64_t fileSize(std::fstream& file);
 	unsigned int alignOffset(unsigned int uiOffset, unsigned int uiAlignment);
 	std::size_t getStringFromFileOffset(std::ifstream &ifFile, std::string &result, std::size_t fileOffset, std::size_t maxLength = 0);
+
+    std::string getLoaderErrorString(LoaderError ldrError, bool userFriendly = false);
 
 	/// Determines if a file is a 32bit or 64bit PE file.
 	unsigned int getFileType(const std::string strFilename);
