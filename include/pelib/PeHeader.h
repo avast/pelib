@@ -1211,7 +1211,7 @@ namespace PeLib
 
 		// Check the position of the NT header for integer overflow
 		if (ntHeaderOffset + header.size() < ntHeaderOffset)
-			setLoaderError(LDR_ERROR_NTHEADER_OUT_OF_FILE);
+			setLoaderError(LDR_ERROR_NTHEADER_OFFSET_OVERFLOW);
 		if((std::uint64_t)ntHeaderOffset + header.size() > fileSize(ifFile))
 			setLoaderError(LDR_ERROR_NTHEADER_OUT_OF_FILE);
 
