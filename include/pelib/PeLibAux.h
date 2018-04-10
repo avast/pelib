@@ -47,8 +47,8 @@ namespace PeLib
 		LDR_ERROR_FILE_TOO_BIG,                     // The file is larger than 0xFFFFFFFF bytes
 		LDR_ERROR_E_LFANEW_UNALIGNED,               // The IMAGE_DOS_HEADER::e_lfanew is not aligned to 4
 		LDR_ERROR_E_LFANEW_OUT_OF_FILE,             // The IMAGE_DOS_HEADER::e_lfanew is out of (lower 4 GB of) the file
-        LDR_ERROR_NTHEADER_OFFSET_OVERFLOW,         // NT header offset + sizeof(IMAGE_NT_HEADERS) overflow
-        LDR_ERROR_NTHEADER_OUT_OF_FILE,             // NT header offset + sizeof(IMAGE_NT_HEADERS) is greater than filesize
+		LDR_ERROR_NTHEADER_OFFSET_OVERFLOW,         // NT header offset + sizeof(IMAGE_NT_HEADERS) overflow
+		LDR_ERROR_NTHEADER_OUT_OF_FILE,             // NT header offset + sizeof(IMAGE_NT_HEADERS) is greater than filesize
 		LDR_ERROR_NO_NT_SIGNATURE,                  // Missing IMAGE_NT_SIGNATURE in the NT headers
 		LDR_ERROR_FILE_HEADER_INVALID,              // Invalid IMAGE_FILE_HEADER::Machine or IMAGE_FILE_HEADER::SizeOfOptionalHeader
 		LDR_ERROR_IMAGE_NON_EXECUTABLE,             // Missing IMAGE_FILE_EXECUTABLE_IMAGE in IMAGE_FILE_HEADER::Characteristics
