@@ -83,11 +83,11 @@ namespace PeLib
 		LDR_ERROR_MAX
 	};
 
-    struct LoaderErrorString
-    {
-        const char * loaderErrorString;
-        const char * loaderErrorUserFriendly;
-    };
+	struct LoaderErrorString
+	{
+		const char * loaderErrorString;
+		const char * loaderErrorUserFriendly;
+	};
 
 	class PeFile;
 
@@ -1210,7 +1210,7 @@ namespace PeLib
 	unsigned int alignOffset(unsigned int uiOffset, unsigned int uiAlignment);
 	std::size_t getStringFromFileOffset(std::ifstream &ifFile, std::string &result, std::size_t fileOffset, std::size_t maxLength = 0);
 
-    std::string getLoaderErrorString(LoaderError ldrError, bool userFriendly = false);
+	std::string getLoaderErrorString(LoaderError ldrError, bool userFriendly = false);
 
 	/// Determines if a file is a 32bit or 64bit PE file.
 	unsigned int getFileType(const std::string strFilename);
