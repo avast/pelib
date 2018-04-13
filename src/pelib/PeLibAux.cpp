@@ -155,7 +155,7 @@ namespace PeLib
 		return filesize;
 	}
 
-	std::string getLoaderErrorString(LoaderError ldrError, bool userFriendly)
+	const char * getLoaderErrorString(LoaderError ldrError, bool userFriendly)
 	{
 		std::size_t index = (std::size_t)ldrError;
 

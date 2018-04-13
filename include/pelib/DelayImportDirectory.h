@@ -87,7 +87,7 @@ namespace PeLib
 					}
 
 					unsigned int uiDelayImportsRva = peHeader.offsetToRva(uiOffset);
-					unsigned int uiDelayImportsVa = peHeader.rvaToVa(uiDelayImportsRva);
+					unsigned int uiDelayImportsVa = (unsigned int)peHeader.rvaToVa(uiDelayImportsRva);
 
 					// Convert absolute virtual addresses to relative virtual addresses.
 					// We do this by calculating whether address is closer to RVA of directory or VA of the directory.
