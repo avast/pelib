@@ -670,7 +670,7 @@ namespace PeLib
 		LoaderError ldrError;
 
 		// Was there a problem in the DOS header?
-		ldrError = MzHeader().loaderError();
+		ldrError = mzHeader().loaderError();
 		if (ldrError != LDR_ERROR_NONE)
 			return ldrError;
 
@@ -678,6 +678,11 @@ namespace PeLib
 		ldrError = peHeader().loaderError();
 		if (ldrError != LDR_ERROR_NONE)
 			return ldrError;
+
+        // Check the loader error
+        ldrError = coffSymTab().loaderError();
+        if (ldrError != LDR_ERROR_NONE)
+            return ldrError;
 
 		// Nothing wrond found
 		return LDR_ERROR_NONE;

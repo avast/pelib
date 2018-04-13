@@ -65,9 +65,9 @@ namespace PeLib
 		LDR_ERROR_INVALID_MACHINE64,                // IMAGE_FILE_HEADER::Machine is invalid for IMAGE_OPTIONAL_HEADER::Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC
 		LDR_ERROR_SIZE_OF_HEADERS_INVALID,          // IMAGE_OPTIONAL_HEADER::SizeOfHeaders is greater than IMAGE_OPTIONAL_HEADER::SizeOfImage
 		LDR_ERROR_SIZE_OF_OPTHDR_NOT_ALIGNED,       // IMAGE_OPTIONAL_HEADER::SizeOfHeaders is not aligned to 8 (64-bit Windows only)
-		LDR_ERROR_SIZE_OF_IMAGE_PTES_ZERO,          // Number of Page Table Entries for the image is zero
-		LDR_ERROR_IMAGE_BASE_NOT_ALIGNED,           // IMAGE_OPTIONAL_HEADER::ImageBase is not aligned to 64KB
-		LDR_ERROR_SIZE_OF_IMAGE_ZERO,               // Number of PTEs for the entire image is zero
+        LDR_ERROR_SIZE_OF_IMAGE_ZERO,               // Number of PTEs for the entire image is zero
+        LDR_ERROR_IMAGE_BASE_NOT_ALIGNED,           // IMAGE_OPTIONAL_HEADER::ImageBase is not aligned to 64KB
+        LDR_ERROR_SIZE_OF_IMAGE_PTES_ZERO,          // Number of Page Table Entries for the image is zero
 		LDR_ERROR_RAW_DATA_OVERFLOW,                // Overflow in section's raw data size
 		LDR_ERROR_SECTION_HEADERS_OUT_OF_IMAGE,     // Section headers are out of the image
 		LDR_ERROR_SECTION_HEADERS_OVERFLOW,         // Image with single subsection: size of headers is near the end of range
