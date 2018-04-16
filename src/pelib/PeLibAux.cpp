@@ -54,9 +54,9 @@ namespace PeLib
 		{"LDR_ERROR_SECTION_HEADERS_OUT_OF_IMAGE", "Section headers are out of the image" },
 		{"LDR_ERROR_SECTION_HEADERS_OVERFLOW",     "Image with single subsection: size of headers is near the end of range" },
 		{"LDR_ERROR_SECTION_SIZE_MISMATCH",        "Image with single subsection: virtual values with rawdata values don't match" },
-		{"LDR_ERROR_INVALID_SECTION_VA",           "Images with normal sections: invalid virtual address of a section" },
-		{"LDR_ERROR_INVALID_SECTION_VSIZE",        "Images with normal sections: invalid virtual size of a section" },
-		{"LDR_ERROR_INVALID_SECTION_RAWSIZE",      "Images with normal sections: invalid raw data size" },
+		{"LDR_ERROR_INVALID_SECTION_VA",           "Invalid virtual address of a section" },
+		{"LDR_ERROR_INVALID_SECTION_VSIZE",        "Invalid virtual size of a section" },
+		{"LDR_ERROR_INVALID_SECTION_RAWSIZE",      "Invalid raw data size of a section" },
 		{"LDR_ERROR_INVALID_SIZE_OF_IMAGE",        "IMAGE_OPTIONAL_HEADER::SizeOfImage doesn't match the (header+sections)" },
 		{"LDR_ERROR_FILE_IS_CUT",                  "The PE file is cut" },
 

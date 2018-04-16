@@ -1291,7 +1291,8 @@ namespace PeLib
 		if (header.FileHeader.SizeOfOptionalHeader & (sizeof(std::uint64_t) - 1))
 			setLoaderError(LDR_ERROR_SIZE_OF_OPTHDR_NOT_ALIGNED);
 
-		if(BytesToPages(header.OptionalHeader.SizeOfImage) == 0)
+		// Set the size of image
+        if(BytesToPages(header.OptionalHeader.SizeOfImage) == 0)
 			setLoaderError(LDR_ERROR_SIZE_OF_IMAGE_ZERO);
 
 		// Check for proper alignment of the image base
