@@ -556,12 +556,15 @@ namespace PeLib
 			}
 
 			PELIB_THUNK_DATA<bits> tdCurr;
+
+            typename FieldSizes<bits>::VAR4_8 PrevOrdinal[4]{};
 			dword uiVaoft = vOldIidCurr[i].impdesc.OriginalFirstThunk;
+            dword uiIndex;
 
 			ifFile.clear();
 			ifFile.seekg(static_cast<unsigned int>(peHeader.rvaToOffset(uiVaoft)), std::ios_base::beg);
 
-			do
+			for(uiIndex = 0; ; uiIndex++)
 			{
 				if (ulFileSize < peHeader.rvaToOffset(uiVaoft) + sizeof(tdCurr.itd.Ordinal))
 				{
@@ -570,8 +573,22 @@ namespace PeLib
 				uiVaoft += sizeof(tdCurr.itd.Ordinal);
 
 				ifFile.read(reinterpret_cast<char*>(&tdCurr.itd.Ordinal), sizeof(tdCurr.itd.Ordinal));
-				if (tdCurr.itd.Ordinal) vOldIidCurr[i].originalfirstthunk.push_back(tdCurr);
-			} while (tdCurr.itd.Ordinal);
+
+                // Are we at the end of the list?
+                if (tdCurr.itd.Ordinal == 0)
+                    break;
+
+                // Check samples that have entire import directory (and possibly more)
+                // filled with constant value, effectively forming very (VERY!) long import directories.
+                // We exclude import names that are repeatedly present in the import thunk chain
+                // Example: 7CE5BB5CA99B3570514AF03782545D41213A77A0F93D4AAC8269823A8D3A58EF
+                if (tdCurr.itd.Ordinal == PrevOrdinal[0] || tdCurr.itd.Ordinal == PrevOrdinal[1] || tdCurr.itd.Ordinal == PrevOrdinal[2] || tdCurr.itd.Ordinal == PrevOrdinal[3])
+                    break;
+                PrevOrdinal[uiIndex % 4] = tdCurr.itd.Ordinal;
+
+                // Insert ordinal to the list
+                vOldIidCurr[i].originalfirstthunk.push_back(tdCurr);
+			}
 
 			// Space occupied by OriginalFirstThunks
 			// -1 because we need open interval
