@@ -192,6 +192,9 @@ namespace PeLib
 
 	const dword PELIB_MM_SIZE_OF_LARGEST_IMAGE = 0x77000000;
 
+    const dword PELIB_MAX_IMPORT_DESCRIPTORS = 0x100;           // Maximum number of import descriptors we support
+    const dword PELIB_MAX_EXPORTED_FUNCTIONS = 0x1000;          // Maximum number of exported functions that we support
+
 	template<int bits>
 	struct PELIB_IMAGE_ORDINAL_FLAGS;
 
