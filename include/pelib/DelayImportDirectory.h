@@ -125,7 +125,7 @@ namespace PeLib
 					rec.DelayImportNameTableOffset = peHeader.rvaToOffset(rec.DelayImportNameTableRva);
 
 					// Get name of library
-					getStringFromFileOffset(ifFile, rec.Name, peHeader.rvaToOffset(rec.NameRva), IMPORT_LIBRARY_MAX_LENGTH);
+					getStringFromFileOffset(ifFile, rec.Name, (std::size_t)peHeader.rvaToOffset(rec.NameRva), IMPORT_LIBRARY_MAX_LENGTH);
 
 					// Get names first
 					// Address table is not guaranteed to be null-terminated and therefore we need to first read name table.

@@ -474,9 +474,7 @@ namespace PeLib
 		std::ifstream ifFile(strFilename.c_str(), std::ios_base::binary);
         VAR4_8 PrevOrdinal[4]{};
         VAR4_8 OrdinalMask = ((VAR4_8)1 << (bits - 1));
-        VAR4_8 BeginOfImage = peHeader.getImageBase();
         VAR4_8 SizeOfImage = peHeader.getSizeOfImage();
-        VAR4_8 EndOfImage = BeginOfImage + SizeOfImage;
         dword uiIndex;
 
 		if (!ifFile)
@@ -597,7 +595,7 @@ namespace PeLib
 
                 // Check samples that have import name out of the image
                 // Sample: CCE461B6EB23728BA3B8A97B9BE84C0FB9175DB31B9949E64144198AB3F702CE
-                if ((tdCurr.itd.Ordinal & OrdinalMask) == 0 && (tdCurr.itd.Ordinal < BeginOfImage || tdCurr.itd.Ordinal >= EndOfImage))
+                if ((tdCurr.itd.Ordinal & OrdinalMask) == 0 && (tdCurr.itd.Ordinal >= SizeOfImage))
                     break;
 
                 // Insert ordinal to the list
@@ -653,7 +651,7 @@ namespace PeLib
 
                 // Check samples that have import name out of the image
                 // Sample: CCE461B6EB23728BA3B8A97B9BE84C0FB9175DB31B9949E64144198AB3F702CE
-                if ((tdCurr.itd.Ordinal & OrdinalMask) == 0 && (tdCurr.itd.Ordinal < BeginOfImage || tdCurr.itd.Ordinal >= EndOfImage))
+                if ((tdCurr.itd.Ordinal & OrdinalMask) == 0 && (tdCurr.itd.Ordinal >= SizeOfImage))
                     break;
 
                 vOldIidCurr[i].firstthunk.push_back(tdCurr);

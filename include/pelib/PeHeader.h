@@ -663,7 +663,7 @@ namespace PeLib
 	unsigned int PeHeaderT<x>::calcStartOfCode() const
 	{
 		unsigned int directories = calcNumberOfRvaAndSizes();
-		dword dwMinOffset = 0xFFFFFFFF;
+		VAR4_8 dwMinOffset = 0xFFFFFFFF;
 		if (directories >= 1 && getIddExportRva() && rvaToOffset(getIddExportRva()) < dwMinOffset) dwMinOffset = rvaToOffset(getIddExportRva());
 		if (directories >= 2 && getIddImportRva() && rvaToOffset(getIddImportRva()) < dwMinOffset) dwMinOffset = rvaToOffset(getIddImportRva());
 		if (directories >= 3 && getIddResourceRva() && rvaToOffset(getIddResourceRva()) < dwMinOffset) dwMinOffset = rvaToOffset(getIddResourceRva());
@@ -687,7 +687,7 @@ namespace PeLib
 				if (getPointerToRawData(i)) dwMinOffset = getPointerToRawData(i);
 			}
 		}
-		return dwMinOffset;
+		return (unsigned int)dwMinOffset;
 	}
 
 	/**
@@ -991,7 +991,7 @@ namespace PeLib
 			}
 
 			if (i == PELIB_IMAGE_DIRECTORY_ENTRY_SECURITY)
-				m_secDirFileOffset = file.tellg();
+				m_secDirFileOffset = (unsigned long)file.tellg();
 
 			iddBuffer.resize(PELIB_IMAGE_DATA_DIRECTORY::size());
 			file.read(reinterpret_cast<char*>(iddBuffer.data()), iddBuffer.size());
@@ -1053,12 +1053,12 @@ namespace PeLib
 				if (stringTableOffset + stringTableIndex <= ulFileSize)
 				{
 					std::string sectionName;
-					getStringFromFileOffset(ifFile, sectionName, stringTableOffset + stringTableIndex, PELIB_IMAGE_SIZEOF_SHORT_NAME);
+					getStringFromFileOffset(ifFile, sectionName, (size_t)(stringTableOffset + stringTableIndex), PELIB_IMAGE_SIZEOF_SHORT_NAME);
 					auto nonPrintableChars = std::count_if(sectionName.begin(), sectionName.end(), [](unsigned char c) { return !isprint(c); });
 
 					if (nonPrintableChars == 0)
 					{
-						getStringFromFileOffset(ifFile, ishCurr.StringTableName, stringTableOffset + stringTableIndex);
+						getStringFromFileOffset(ifFile, ishCurr.StringTableName, (std::size_t)(stringTableOffset + stringTableIndex));
 					}
 					else
 					{
