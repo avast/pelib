@@ -109,7 +109,6 @@ namespace PeLib
 			strBuf >> stringTableSize;
 		}
 
-		stringTableSize = 0;
 		if (ifFile.gcount() < 4)
 		{
 			stringTableSize = (std::size_t)ifFile.gcount();
