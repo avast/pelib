@@ -472,7 +472,6 @@ namespace PeLib
 	int ImportDirectory<bits>::read(const std::string& strFilename, const PeHeaderT<bits>& peHeader)
 	{
 		std::ifstream ifFile(strFilename.c_str(), std::ios_base::binary);
-//      VAR4_8 PrevOrdinal[4]{};
         VAR4_8 OrdinalMask = ((VAR4_8)1 << (bits - 1));
         VAR4_8 SizeOfImage = peHeader.getSizeOfImage();
         dword uiIndex;
@@ -582,16 +581,8 @@ namespace PeLib
 				ifFile.read(reinterpret_cast<char*>(&tdCurr.itd.Ordinal), sizeof(tdCurr.itd.Ordinal));
 
                 // Are we at the end of the list?
-                if (tdCurr.itd.Ordinal == 0)
+                if (tdCurr.itd.Ordinal == 0 || uiIndex >= PELIB_MAX_IMPORTED_FUNCTIONS)
                     break;
-
-                // Check samples that have entire import directory (and possibly more)
-                // filled with constant value, effectively forming very (VERY!) long import directories.
-                // We exclude import names that are repeatedly present in the import thunk chain
-                // Example: 7CE5BB5CA99B3570514AF03782545D41213A77A0F93D4AAC8269823A8D3A58EF
-//              if (tdCurr.itd.Ordinal == PrevOrdinal[0] || tdCurr.itd.Ordinal == PrevOrdinal[1] || tdCurr.itd.Ordinal == PrevOrdinal[2] || tdCurr.itd.Ordinal == PrevOrdinal[3])
-//                  break;
-//              PrevOrdinal[uiIndex % 4] = tdCurr.itd.Ordinal;
 
                 // Check samples that have import name out of the image
                 // Sample: CCE461B6EB23728BA3B8A97B9BE84C0FB9175DB31B9949E64144198AB3F702CE
@@ -638,21 +629,13 @@ namespace PeLib
                 ifFile.read(reinterpret_cast<char*>(&tdCurr.itd.Ordinal), sizeof(tdCurr.itd.Ordinal));
 
                 // Are we at the end of the list?
-                if (tdCurr.itd.Ordinal == 0)
+                if (tdCurr.itd.Ordinal == 0 || uiIndex >= PELIB_MAX_IMPORTED_FUNCTIONS)
                     break;
-
-                // Check samples that have entire import directory (and possibly more)
-                // filled with constant value, effectively forming very (VERY!) long import directories.
-                // We exclude import names that are repeatedly present in the import thunk chain
-                // Example: 7CE5BB5CA99B3570514AF03782545D41213A77A0F93D4AAC8269823A8D3A58EF
-//              if (tdCurr.itd.Ordinal == PrevOrdinal[0] || tdCurr.itd.Ordinal == PrevOrdinal[1] || tdCurr.itd.Ordinal == PrevOrdinal[2] || tdCurr.itd.Ordinal == PrevOrdinal[3])
-//                  break;
-//              PrevOrdinal[uiIndex % 4] = tdCurr.itd.Ordinal;
 
                 // Check samples that have import name out of the image
                 // Sample: CCE461B6EB23728BA3B8A97B9BE84C0FB9175DB31B9949E64144198AB3F702CE
-                if ((tdCurr.itd.Ordinal & OrdinalMask) == 0 && (tdCurr.itd.Ordinal >= SizeOfImage))
-                    break;
+//              if ((tdCurr.itd.Ordinal & OrdinalMask) == 0 && (tdCurr.itd.Ordinal >= SizeOfImage))
+//                  break;
 
                 vOldIidCurr[i].firstthunk.push_back(tdCurr);
 
