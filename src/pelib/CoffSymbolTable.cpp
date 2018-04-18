@@ -81,11 +81,11 @@ namespace PeLib
 		}
 
 		// Check for overflow
-        if ((uiOffset + uiSize) < uiOffset)
-        {
-            setLoaderError(LDR_ERROR_COFF_POS_OVERFLOW);
-            return ERROR_INVALID_FILE;
-        }
+		if ((uiOffset + uiSize) < uiOffset)
+		{
+			setLoaderError(LDR_ERROR_COFF_POS_OVERFLOW);
+			return ERROR_INVALID_FILE;
+		}
 
 		std::uint64_t ulFileSize = fileSize(ifFile);
 		std::uint64_t stringTableOffset = uiOffset + uiSize;

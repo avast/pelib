@@ -376,19 +376,19 @@ namespace PeLib
 			return PEFILE_UNKNOWN;
 		}
 
-        word machine = pef.peHeader().getMachine();
-        word magic = pef.peHeader().getMagic();
+		word machine = pef.peHeader().getMachine();
+		word magic = pef.peHeader().getMagic();
 
-        // jk2012-02-20: make the PEFILE32 be the default return value
-        // std::cout << "machine: " << machine << std::endl << "magic: " << magic << std::endl;
-        if ((machine == PELIB_IMAGE_FILE_MACHINE_AMD64 || machine == PELIB_IMAGE_FILE_MACHINE_IA64) && magic == PELIB_IMAGE_NT_OPTIONAL_HDR64_MAGIC)
-        {
-            return PEFILE64;
-        }
-        else
-        {
-            return PEFILE32;
-        }
+		// jk2012-02-20: make the PEFILE32 be the default return value
+		// std::cout << "machine: " << machine << std::endl << "magic: " << magic << std::endl;
+		if ((machine == PELIB_IMAGE_FILE_MACHINE_AMD64 || machine == PELIB_IMAGE_FILE_MACHINE_IA64) && magic == PELIB_IMAGE_NT_OPTIONAL_HDR64_MAGIC)
+		{
+			return PEFILE64;
+		}
+		else
+		{
+			return PEFILE32;
+		}
 
 		/*
 			word machine, magic;
