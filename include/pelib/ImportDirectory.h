@@ -551,7 +551,8 @@ namespace PeLib
 			// Space occupied by names
 			// +1 for null terminator
 			// If the end address is even, we need to align it by 2, so next name always starts at even address
-			m_occupiedAddresses.emplace_back(vOldIidCurr[i].impdesc.Name, vOldIidCurr[i].impdesc.Name + vOldIidCurr[i].name.length() + 1);
+			m_occupiedAddresses.emplace_back(static_cast<unsigned int>(vOldIidCurr[i].impdesc.Name),
+										     static_cast<unsigned int>(vOldIidCurr[i].impdesc.Name + vOldIidCurr[i].name.length() + 1));
 			if (!(m_occupiedAddresses.back().second & 1))
 				m_occupiedAddresses.back().second += 1;
 		}
@@ -680,8 +681,8 @@ namespace PeLib
 					// +1 for null terminator
 					// If the end address is even, we need to align it by 2, so next name always starts at even address
 					m_occupiedAddresses.emplace_back(
-							vOldIidCurr[i].originalfirstthunk[j].itd.Ordinal,
-							vOldIidCurr[i].originalfirstthunk[j].itd.Ordinal + sizeof(vOldIidCurr[i].originalfirstthunk[j].hint) + vOldIidCurr[i].originalfirstthunk[j].fname.length() + 1
+						static_cast<unsigned int>(vOldIidCurr[i].originalfirstthunk[j].itd.Ordinal),
+						static_cast<unsigned int>(vOldIidCurr[i].originalfirstthunk[j].itd.Ordinal + sizeof(vOldIidCurr[i].originalfirstthunk[j].hint) + vOldIidCurr[i].originalfirstthunk[j].fname.length() + 1)
 						);
 					if (!(m_occupiedAddresses.back().second & 1))
 						m_occupiedAddresses.back().second += 1;
@@ -709,8 +710,8 @@ namespace PeLib
 					// +1 for null terminator
 					// If the end address is even, we need to align it by 2, so next name always starts at even address
 					m_occupiedAddresses.emplace_back(
-							vOldIidCurr[i].firstthunk[j].itd.Ordinal,
-							vOldIidCurr[i].firstthunk[j].itd.Ordinal + sizeof(vOldIidCurr[i].firstthunk[j].hint) + vOldIidCurr[i].firstthunk[j].fname.length() + 1
+							static_cast<unsigned int>(vOldIidCurr[i].firstthunk[j].itd.Ordinal),
+						    static_cast<unsigned int>(vOldIidCurr[i].firstthunk[j].itd.Ordinal + sizeof(vOldIidCurr[i].firstthunk[j].hint) + vOldIidCurr[i].firstthunk[j].fname.length() + 1)
 						);
 					if (!(m_occupiedAddresses.back().second & 1))
 						m_occupiedAddresses.back().second += 1;
