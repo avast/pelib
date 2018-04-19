@@ -472,9 +472,9 @@ namespace PeLib
 	int ImportDirectory<bits>::read(const std::string& strFilename, const PeHeaderT<bits>& peHeader)
 	{
 		std::ifstream ifFile(strFilename.c_str(), std::ios_base::binary);
-        VAR4_8 OrdinalMask = ((VAR4_8)1 << (bits - 1));
-        VAR4_8 SizeOfImage = peHeader.getSizeOfImage();
-        dword uiIndex;
+		VAR4_8 OrdinalMask = ((VAR4_8)1 << (bits - 1));
+		VAR4_8 SizeOfImage = peHeader.getSizeOfImage();
+		dword uiIndex;
 
 		if (!ifFile)
 		{
@@ -493,13 +493,13 @@ namespace PeLib
 
 		PELIB_IMAGE_IMPORT_DIRECTORY<bits> iidCurr;
 		std::vector<PELIB_IMAGE_IMPORT_DIRECTORY<bits> > vOldIidCurr;
-        unsigned int uiDescCounter = 0;
+		unsigned int uiDescCounter = 0;
 		unsigned int uiDescOffset = uiOffset;
 
 		// Read and store all descriptors
-        for (;;)
+		for (;;)
 		{
-            // Are we getting out of the file?
+			// Are we getting out of the file?
 			if (uiDescOffset + PELIB_IMAGE_IMPORT_DESCRIPTOR::size() > ulFileSize)
 				break;
 
@@ -518,21 +518,21 @@ namespace PeLib
 			uiDescCounter++;
 
 			// If Name or FirstThunk are 0, this descriptor is considered as null-terminator.
-            if (iidCurr.impdesc.Name == 0 || iidCurr.impdesc.FirstThunk == 0)
-                break;
+			if (iidCurr.impdesc.Name == 0 || iidCurr.impdesc.FirstThunk == 0)
+				break;
 
-            // We ignore names and thunks that go beyond the file
-            if (iidCurr.impdesc.Name > SizeOfImage || iidCurr.impdesc.FirstThunk > SizeOfImage)
-                break;
+			// We ignore names and thunks that go beyond the file
+			if (iidCurr.impdesc.Name > SizeOfImage || iidCurr.impdesc.FirstThunk > SizeOfImage)
+				break;
 
-            // Ignore too large import directories
-            // Sample: CCE461B6EB23728BA3B8A97B9BE84C0FB9175DB31B9949E64144198AB3F702CE
-            // Number of import descriptors: 0x6253
-            if (vOldIidCurr.size() > PELIB_MAX_IMPORT_DESCRIPTORS)
-                break;
+			// Ignore too large import directories
+			// Sample: CCE461B6EB23728BA3B8A97B9BE84C0FB9175DB31B9949E64144198AB3F702CE
+			// Number of import descriptors: 0x6253
+			if (vOldIidCurr.size() > PELIB_MAX_IMPORT_DESCRIPTORS)
+				break;
 
-            // Push the import descriptor into the vector
-            vOldIidCurr.push_back(iidCurr);
+			// Push the import descriptor into the vector
+			vOldIidCurr.push_back(iidCurr);
 		}
 
 		// Space occupied by import descriptors
@@ -565,7 +565,7 @@ namespace PeLib
 			}
 
 			PELIB_THUNK_DATA<bits> tdCurr;
-            dword uiVaoft = vOldIidCurr[i].impdesc.OriginalFirstThunk;
+			dword uiVaoft = vOldIidCurr[i].impdesc.OriginalFirstThunk;
 
 			ifFile.clear();
 			ifFile.seekg(static_cast<unsigned int>(peHeader.rvaToOffset(uiVaoft)), std::ios_base::beg);
@@ -580,17 +580,17 @@ namespace PeLib
 
 				ifFile.read(reinterpret_cast<char*>(&tdCurr.itd.Ordinal), sizeof(tdCurr.itd.Ordinal));
 
-                // Are we at the end of the list?
-                if (tdCurr.itd.Ordinal == 0 || uiIndex >= PELIB_MAX_IMPORTED_FUNCTIONS)
-                    break;
+				// Are we at the end of the list?
+				if (tdCurr.itd.Ordinal == 0 || uiIndex >= PELIB_MAX_IMPORTED_FUNCTIONS)
+					break;
 
-                // Check samples that have import name out of the image
-                // Sample: CCE461B6EB23728BA3B8A97B9BE84C0FB9175DB31B9949E64144198AB3F702CE
-                if ((tdCurr.itd.Ordinal & OrdinalMask) == 0 && (tdCurr.itd.Ordinal >= SizeOfImage))
-                    break;
+				// Check samples that have import name out of the image
+				// Sample: CCE461B6EB23728BA3B8A97B9BE84C0FB9175DB31B9949E64144198AB3F702CE
+				if ((tdCurr.itd.Ordinal & OrdinalMask) == 0 && (tdCurr.itd.Ordinal >= SizeOfImage))
+					break;
 
-                // Insert ordinal to the list
-                vOldIidCurr[i].originalfirstthunk.push_back(tdCurr);
+				// Insert ordinal to the list
+				vOldIidCurr[i].originalfirstthunk.push_back(tdCurr);
 			}
 
 			// Space occupied by OriginalFirstThunks
@@ -625,19 +625,19 @@ namespace PeLib
 				uiVaoft += sizeof(tdCurr.itd.Ordinal);
 
 				// Read the import thunk. Make sure it's initialized in case the file read fails
-                tdCurr.itd.Ordinal = 0;
-                ifFile.read(reinterpret_cast<char*>(&tdCurr.itd.Ordinal), sizeof(tdCurr.itd.Ordinal));
+				tdCurr.itd.Ordinal = 0;
+				ifFile.read(reinterpret_cast<char*>(&tdCurr.itd.Ordinal), sizeof(tdCurr.itd.Ordinal));
 
-                // Are we at the end of the list?
-                if (tdCurr.itd.Ordinal == 0 || uiIndex >= PELIB_MAX_IMPORTED_FUNCTIONS)
-                    break;
+				// Are we at the end of the list?
+				if (tdCurr.itd.Ordinal == 0 || uiIndex >= PELIB_MAX_IMPORTED_FUNCTIONS)
+					break;
 
-                // Check samples that have import name out of the image
-                // Sample: CCE461B6EB23728BA3B8A97B9BE84C0FB9175DB31B9949E64144198AB3F702CE
-//              if ((tdCurr.itd.Ordinal & OrdinalMask) == 0 && (tdCurr.itd.Ordinal >= SizeOfImage))
-//                  break;
+				// Check samples that have import name out of the image
+				// Sample: CCE461B6EB23728BA3B8A97B9BE84C0FB9175DB31B9949E64144198AB3F702CE
+//				if ((tdCurr.itd.Ordinal & OrdinalMask) == 0 && (tdCurr.itd.Ordinal >= SizeOfImage))
+//					break;
 
-                vOldIidCurr[i].firstthunk.push_back(tdCurr);
+				vOldIidCurr[i].firstthunk.push_back(tdCurr);
 
 				// If this import descriptor has valid ILT, then size of IAT is determined from the size of ILT
 				if (hasValidIlt && vOldIidCurr[i].originalfirstthunk.size() == vOldIidCurr[i].firstthunk.size())

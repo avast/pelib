@@ -62,7 +62,7 @@ namespace PeLib
 
 		{"LDR_ERROR_COFF_POS_OVERFLOW",            "The position of the COFF debug info overflowed" },
 		{"LDR_ERROR_COFF_POS_OUT_OF_FILE",         "The position of the COFF debug info is out of the file" }
-    };
+	};
 
 
 	PELIB_IMAGE_FILE_MACHINE_ITERATOR::PELIB_IMAGE_FILE_MACHINE_ITERATOR()

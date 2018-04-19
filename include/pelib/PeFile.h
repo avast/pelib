@@ -679,7 +679,7 @@ namespace PeLib
 		if (ldrError != LDR_ERROR_NONE)
 			return ldrError;
 
-        // Check the loader error
+		// Check the loader error
 		ldrError = coffSymTab().loaderError();
 		if (ldrError != LDR_ERROR_NONE)
 			return ldrError;

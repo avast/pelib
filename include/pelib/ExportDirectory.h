@@ -185,10 +185,10 @@ namespace PeLib
 		inpBuffer >> iedCurr.ied.AddressOfNameOrdinals;
 		m_occupiedAddresses.emplace_back(dirRva, dirRva + PELIB_IMAGE_EXPORT_DIRECTORY::size() - 1);
 
-        // Verify the export directory. Do not allow more functions than the limit
-        // Sample: CCE461B6EB23728BA3B8A97B9BE84C0FB9175DB31B9949E64144198AB3F702CE
-        if (iedCurr.ied.NumberOfFunctions > PELIB_MAX_EXPORTED_FUNCTIONS || iedCurr.ied.NumberOfNames > PELIB_MAX_EXPORTED_FUNCTIONS)
-            return ERROR_INVALID_FILE;
+		// Verify the export directory. Do not allow more functions than the limit
+		// Sample: CCE461B6EB23728BA3B8A97B9BE84C0FB9175DB31B9949E64144198AB3F702CE
+		if (iedCurr.ied.NumberOfFunctions > PELIB_MAX_EXPORTED_FUNCTIONS || iedCurr.ied.NumberOfNames > PELIB_MAX_EXPORTED_FUNCTIONS)
+			return ERROR_INVALID_FILE;
 
 		unsigned int offset = peHeader.rvaToOffset(iedCurr.ied.Name);
 		if (offset >= ulFileSize)

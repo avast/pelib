@@ -37,40 +37,40 @@ namespace PeLib
 	{
 	}
 
-    template<>
-    bool PeHeaderT<32>::isValid() const
-    {
+	template<>
+	bool PeHeaderT<32>::isValid() const
+	{
 		return true;
-    }
+	}
 
-    template<>
-    bool PeHeaderT<64>::isValid() const
-    {
+	template<>
+	bool PeHeaderT<64>::isValid() const
+	{
 		return true;
-    }
+	}
 
-    template<>
-    bool PeHeaderT<32>::isValid(unsigned int pehf) const
-    {
-    	(void) pehf; /* avoid warning about unused parameter */
-    /*
-    	if (pehf == NtSignature)
-    	{
+	template<>
+	bool PeHeaderT<32>::isValid(unsigned int pehf) const
+	{
+		(void) pehf; /* avoid warning about unused parameter */
+	/*
+		if (pehf == NtSignature)
+		{
 			return m_inthHeader.Signature == IMAGE_NT_SIGNATURE;
-    	}
-    	else if (pehf == NumberOfSections)
-    	{
+		}
+		else if (pehf == NumberOfSections)
+		{
 			return getNumberOfSections() == calcNumberOfSections();
-    	}      */
-    	return false;
-    }
-
-    template<>
-    bool PeHeaderT<64>::isValid(unsigned int pehf) const
-    {
-    	(void) pehf; /* avoid warning about unused parameter */
+		}  */
 		return false;
-    }
+	}
+
+	template<>
+	bool PeHeaderT<64>::isValid(unsigned int pehf) const
+	{
+		(void) pehf; /* avoid warning about unused parameter */
+		return false;
+	}
 
 	/**
 	* @return The BaseOfData value from the PE header.

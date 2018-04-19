@@ -1087,8 +1087,8 @@ namespace PeLib
 		// Verify section headers
 		std::uint64_t NextVirtualAddress = header.OptionalHeader.ImageBase;
 		std::uint32_t NumberOfSectionPTEs = AlignToSize(header.OptionalHeader.SizeOfHeaders, header.OptionalHeader.SectionAlignment) / PELIB_PAGE_SIZE;
-        std::uint32_t NumberOfPTEs = BytesToPages(header.OptionalHeader.SizeOfImage);
-        std::uint32_t FileAlignmentMask = header.OptionalHeader.FileAlignment - 1;
+		std::uint32_t NumberOfPTEs = BytesToPages(header.OptionalHeader.SizeOfImage);
+		std::uint32_t FileAlignmentMask = header.OptionalHeader.FileAlignment - 1;
 		bool SingleSubsection = (header.OptionalHeader.SectionAlignment < PELIB_PAGE_SIZE);
 
 		// Verify the image
@@ -1105,11 +1105,11 @@ namespace PeLib
 			NextVirtualAddress += NumberOfSectionPTEs * PELIB_PAGE_SIZE;
 			NumberOfPTEs -= NumberOfSectionPTEs;
 		}
-        else
-        {
-            NumberOfSectionPTEs = AlignToSize(header.OptionalHeader.SizeOfImage, PELIB_PAGE_SIZE) / PELIB_PAGE_SIZE;
-            NumberOfPTEs -= NumberOfSectionPTEs;
-        }
+		else
+		{
+			NumberOfSectionPTEs = AlignToSize(header.OptionalHeader.SizeOfImage, PELIB_PAGE_SIZE) / PELIB_PAGE_SIZE;
+			NumberOfPTEs -= NumberOfSectionPTEs;
+		}
 
 		for (auto sectHdr : vIshdCurr)
 		{
@@ -1166,11 +1166,11 @@ namespace PeLib
 		}
 
 		// Verify the image size
-        std::uint32_t ThresholdNumberOfPTEs = (SingleSubsection == false) ? (header.OptionalHeader.SectionAlignment / PELIB_PAGE_SIZE) : 1;
-        if (NumberOfPTEs >= ThresholdNumberOfPTEs)
-        {
-            setLoaderError(LDR_ERROR_INVALID_SIZE_OF_IMAGE);
-        }
+		std::uint32_t ThresholdNumberOfPTEs = (SingleSubsection == false) ? (header.OptionalHeader.SectionAlignment / PELIB_PAGE_SIZE) : 1;
+		if (NumberOfPTEs >= ThresholdNumberOfPTEs)
+		{
+			setLoaderError(LDR_ERROR_INVALID_SIZE_OF_IMAGE);
+		}
 
 		// Did we detect a trimmed file?
 		if(bRawDataBeyondEOF)
@@ -1292,7 +1292,7 @@ namespace PeLib
 			setLoaderError(LDR_ERROR_SIZE_OF_OPTHDR_NOT_ALIGNED);
 
 		// Set the size of image
-        if(BytesToPages(header.OptionalHeader.SizeOfImage) == 0)
+		if(BytesToPages(header.OptionalHeader.SizeOfImage) == 0)
 			setLoaderError(LDR_ERROR_SIZE_OF_IMAGE_ZERO);
 
 		// Check for proper alignment of the image base
