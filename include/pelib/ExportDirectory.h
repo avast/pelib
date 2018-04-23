@@ -145,7 +145,7 @@ namespace PeLib
 	/**
 	* @param strFilename Name of the file.
 	* @param peHeader A valid PE header which is necessary because some RVA calculations need to be done.
-    * \todo: Proper use of InputBuffer
+	* \todo: Proper use of InputBuffer
 	**/
 	template <int bits>
 	int ExportDirectoryT<bits>::read(const std::string& strFilename, const PeHeaderT<bits>& peHeader)
@@ -157,10 +157,10 @@ namespace PeLib
 			return ERROR_OPENING_FILE;
 		}
 
-		unsigned int filesize = fileSize(ifFile);
+		std::uint64_t ulFileSize = fileSize(ifFile);
 		unsigned int dirRva = peHeader.getIddExportRva();
 		unsigned int dirOffset = peHeader.rvaToOffset(dirRva);
-		if (filesize < dirOffset + PELIB_IMAGE_EXPORT_DIRECTORY::size())
+		if (ulFileSize < dirOffset + PELIB_IMAGE_EXPORT_DIRECTORY::size())
 		{
 			return ERROR_INVALID_FILE;
 		}
@@ -185,8 +185,13 @@ namespace PeLib
 		inpBuffer >> iedCurr.ied.AddressOfNameOrdinals;
 		m_occupiedAddresses.emplace_back(dirRva, dirRva + PELIB_IMAGE_EXPORT_DIRECTORY::size() - 1);
 
+		// Verify the export directory. Do not allow more functions than the limit
+		// Sample: CCE461B6EB23728BA3B8A97B9BE84C0FB9175DB31B9949E64144198AB3F702CE
+		if (iedCurr.ied.NumberOfFunctions > PELIB_MAX_EXPORTED_FUNCTIONS || iedCurr.ied.NumberOfNames > PELIB_MAX_EXPORTED_FUNCTIONS)
+			return ERROR_INVALID_FILE;
+
 		unsigned int offset = peHeader.rvaToOffset(iedCurr.ied.Name);
-		if (offset >= filesize)
+		if (offset >= ulFileSize)
 			return ERROR_INVALID_FILE;
 		ifFile.seekg(offset, std::ios::beg);
 
@@ -207,7 +212,7 @@ namespace PeLib
 		for (unsigned int i=0;i<iedCurr.ied.NumberOfFunctions;i++)
 		{
 			unsigned int offset = peHeader.rvaToOffset(iedCurr.ied.AddressOfFunctions) + i * sizeof(efiCurr.addroffunc);
-			if (offset >= filesize)
+			if (offset >= ulFileSize)
 				return ERROR_INVALID_FILE;
 			ifFile.seekg(offset, std::ios::beg);
 			ifFile.read(reinterpret_cast<char*>(&efiCurr.addroffunc), sizeof(efiCurr.addroffunc));
@@ -226,7 +231,7 @@ namespace PeLib
 		for (unsigned int i=0;i<iedCurr.ied.NumberOfNames;i++)
 		{
 			unsigned int offset = peHeader.rvaToOffset(iedCurr.ied.AddressOfNameOrdinals) + i*sizeof(efiCurr.ordinal);
-			if (offset >= filesize)
+			if (offset >= ulFileSize)
 				return ERROR_INVALID_FILE;
 			ifFile.seekg(offset, std::ios::beg);
 			word ordinal;
@@ -244,7 +249,7 @@ namespace PeLib
 			iedCurr.functions[ordinal].ordinal = ordinal;
 
 			offset = peHeader.rvaToOffset(iedCurr.ied.AddressOfNames) + i*sizeof(efiCurr.addrofname);
-			if (offset >= filesize)
+			if (offset >= ulFileSize)
 				return ERROR_INVALID_FILE;
 			ifFile.seekg(offset, std::ios::beg);
 			ifFile.read(reinterpret_cast<char*>(&iedCurr.functions[ordinal].addrofname), sizeof(iedCurr.functions[ordinal].addrofname));
@@ -256,7 +261,7 @@ namespace PeLib
 				);
 
 			offset = peHeader.rvaToOffset(iedCurr.functions[ordinal].addrofname);
-			if (offset >= filesize)
+			if (offset >= ulFileSize)
 				return ERROR_INVALID_FILE;
 			ifFile.seekg(offset, std::ios::beg);
 

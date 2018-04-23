@@ -53,7 +53,7 @@ namespace PeLib
 		// That's why the function definition is here.
 		/// Tests if a certain function is imported.
 		template<typename T> bool hasFunction(std::string strFilename, T value, bool(PELIB_THUNK_DATA<bits>::* comp)(T) const) const
-	    {
+		{
 			ConstImpDirFileIterator FileIter = m_vOldiid.begin();
 			ConstImpDirFileIterator EndIter = m_vOldiid.end();
 
@@ -472,16 +472,19 @@ namespace PeLib
 	int ImportDirectory<bits>::read(const std::string& strFilename, const PeHeaderT<bits>& peHeader)
 	{
 		std::ifstream ifFile(strFilename.c_str(), std::ios_base::binary);
+		VAR4_8 OrdinalMask = ((VAR4_8)1 << (bits - 1));
+		VAR4_8 SizeOfImage = peHeader.getSizeOfImage();
+		dword uiIndex;
 
 		if (!ifFile)
 		{
 			return ERROR_OPENING_FILE;
 		}
 
-		unsigned int uiFileSize = fileSize(ifFile);
+		std::uint64_t ulFileSize = fileSize(ifFile);
 		unsigned int uiOffset = peHeader.rvaToOffset(peHeader.getIddImportRva());
 
-		if (uiFileSize < uiOffset)
+		if (ulFileSize < uiOffset)
 		{
 			return ERROR_INVALID_FILE;
 		}
@@ -494,12 +497,11 @@ namespace PeLib
 		unsigned int uiDescOffset = uiOffset;
 
 		// Read and store all descriptors
-		while (uiDescOffset < uiFileSize)
+		for (;;)
 		{
-			if (uiDescOffset + PELIB_IMAGE_IMPORT_DESCRIPTOR::size() > uiFileSize)
-			{
+			// Are we getting out of the file?
+			if (uiDescOffset + PELIB_IMAGE_IMPORT_DESCRIPTOR::size() > ulFileSize)
 				break;
-			}
 
 			std::vector<unsigned char> vImportDescriptor(PELIB_IMAGE_IMPORT_DESCRIPTOR::size());
 			ifFile.read(reinterpret_cast<char*>(vImportDescriptor.data()), PELIB_IMAGE_IMPORT_DESCRIPTOR::size());
@@ -516,14 +518,21 @@ namespace PeLib
 			uiDescCounter++;
 
 			// If Name or FirstThunk are 0, this descriptor is considered as null-terminator.
-			if (iidCurr.impdesc.Name != 0 && iidCurr.impdesc.FirstThunk != 0)
-			{
-				vOldIidCurr.push_back(iidCurr);
-			}
-			else
-			{
+			if (iidCurr.impdesc.Name == 0 || iidCurr.impdesc.FirstThunk == 0)
 				break;
-			}
+
+			// We ignore names and thunks that go beyond the file
+			if (iidCurr.impdesc.Name > SizeOfImage || iidCurr.impdesc.FirstThunk > SizeOfImage)
+				break;
+
+			// Ignore too large import directories
+			// Sample: CCE461B6EB23728BA3B8A97B9BE84C0FB9175DB31B9949E64144198AB3F702CE
+			// Number of import descriptors: 0x6253
+			if (vOldIidCurr.size() > PELIB_MAX_IMPORT_DESCRIPTORS)
+				break;
+
+			// Push the import descriptor into the vector
+			vOldIidCurr.push_back(iidCurr);
 		}
 
 		// Space occupied by import descriptors
@@ -542,7 +551,8 @@ namespace PeLib
 			// Space occupied by names
 			// +1 for null terminator
 			// If the end address is even, we need to align it by 2, so next name always starts at even address
-			m_occupiedAddresses.emplace_back(vOldIidCurr[i].impdesc.Name, vOldIidCurr[i].impdesc.Name + vOldIidCurr[i].name.length() + 1);
+			m_occupiedAddresses.emplace_back(static_cast<unsigned int>(vOldIidCurr[i].impdesc.Name),
+										     static_cast<unsigned int>(vOldIidCurr[i].impdesc.Name + vOldIidCurr[i].name.length() + 1));
 			if (!(m_occupiedAddresses.back().second & 1))
 				m_occupiedAddresses.back().second += 1;
 		}
@@ -561,17 +571,28 @@ namespace PeLib
 			ifFile.clear();
 			ifFile.seekg(static_cast<unsigned int>(peHeader.rvaToOffset(uiVaoft)), std::ios_base::beg);
 
-			do
+			for(uiIndex = 0; ; uiIndex++)
 			{
-				if (uiFileSize < peHeader.rvaToOffset(uiVaoft) + sizeof(tdCurr.itd.Ordinal))
+				if (ulFileSize < peHeader.rvaToOffset(uiVaoft) + sizeof(tdCurr.itd.Ordinal))
 				{
 					return ERROR_INVALID_FILE;
 				}
 				uiVaoft += sizeof(tdCurr.itd.Ordinal);
 
 				ifFile.read(reinterpret_cast<char*>(&tdCurr.itd.Ordinal), sizeof(tdCurr.itd.Ordinal));
-				if (tdCurr.itd.Ordinal) vOldIidCurr[i].originalfirstthunk.push_back(tdCurr);
-			} while (tdCurr.itd.Ordinal);
+
+				// Are we at the end of the list?
+				if (tdCurr.itd.Ordinal == 0 || uiIndex >= PELIB_MAX_IMPORTED_FUNCTIONS)
+					break;
+
+				// Check samples that have import name out of the image
+				// Sample: CCE461B6EB23728BA3B8A97B9BE84C0FB9175DB31B9949E64144198AB3F702CE
+				if ((tdCurr.itd.Ordinal & OrdinalMask) == 0 && (tdCurr.itd.Ordinal >= SizeOfImage))
+					break;
+
+				// Insert ordinal to the list
+				vOldIidCurr[i].originalfirstthunk.push_back(tdCurr);
+			}
 
 			// Space occupied by OriginalFirstThunks
 			// -1 because we need open interval
@@ -595,17 +616,29 @@ namespace PeLib
 			ifFile.clear();
 			ifFile.seekg(static_cast<unsigned int>(peHeader.rvaToOffset(uiVaoft)), std::ios_base::beg);
 
-			do
+			for(uiIndex = 0; ; uiIndex++)
 			{
-				if (uiFileSize < peHeader.rvaToOffset(uiVaoft) + sizeof(tdCurr.itd.Ordinal))
+				if (ulFileSize < peHeader.rvaToOffset(uiVaoft) + sizeof(tdCurr.itd.Ordinal))
 				{
 					return ERROR_INVALID_FILE;
 				}
 
 				uiVaoft += sizeof(tdCurr.itd.Ordinal);
 
+				// Read the import thunk. Make sure it's initialized in case the file read fails
+				tdCurr.itd.Ordinal = 0;
 				ifFile.read(reinterpret_cast<char*>(&tdCurr.itd.Ordinal), sizeof(tdCurr.itd.Ordinal));
-				if (tdCurr.itd.Ordinal) vOldIidCurr[i].firstthunk.push_back(tdCurr);
+
+				// Are we at the end of the list?
+				if (tdCurr.itd.Ordinal == 0 || uiIndex >= PELIB_MAX_IMPORTED_FUNCTIONS)
+					break;
+
+				// Check samples that have import name out of the image
+				// Sample: CCE461B6EB23728BA3B8A97B9BE84C0FB9175DB31B9949E64144198AB3F702CE
+//				if ((tdCurr.itd.Ordinal & OrdinalMask) == 0 && (tdCurr.itd.Ordinal >= SizeOfImage))
+//					break;
+
+				vOldIidCurr[i].firstthunk.push_back(tdCurr);
 
 				// If this import descriptor has valid ILT, then size of IAT is determined from the size of ILT
 				if (hasValidIlt && vOldIidCurr[i].originalfirstthunk.size() == vOldIidCurr[i].firstthunk.size())
@@ -614,7 +647,7 @@ namespace PeLib
 					uiVaoft += sizeof(tdCurr.itd.Ordinal);
 					break;
 				}
-			} while (tdCurr.itd.Ordinal);
+			}
 
 			// Space occupied by FirstThunks
 			// -1 because we need open interval
@@ -648,8 +681,8 @@ namespace PeLib
 					// +1 for null terminator
 					// If the end address is even, we need to align it by 2, so next name always starts at even address
 					m_occupiedAddresses.emplace_back(
-							vOldIidCurr[i].originalfirstthunk[j].itd.Ordinal,
-							vOldIidCurr[i].originalfirstthunk[j].itd.Ordinal + sizeof(vOldIidCurr[i].originalfirstthunk[j].hint) + vOldIidCurr[i].originalfirstthunk[j].fname.length() + 1
+						static_cast<unsigned int>(vOldIidCurr[i].originalfirstthunk[j].itd.Ordinal),
+						static_cast<unsigned int>(vOldIidCurr[i].originalfirstthunk[j].itd.Ordinal + sizeof(vOldIidCurr[i].originalfirstthunk[j].hint) + vOldIidCurr[i].originalfirstthunk[j].fname.length() + 1)
 						);
 					if (!(m_occupiedAddresses.back().second & 1))
 						m_occupiedAddresses.back().second += 1;
@@ -677,8 +710,8 @@ namespace PeLib
 					// +1 for null terminator
 					// If the end address is even, we need to align it by 2, so next name always starts at even address
 					m_occupiedAddresses.emplace_back(
-							vOldIidCurr[i].firstthunk[j].itd.Ordinal,
-							vOldIidCurr[i].firstthunk[j].itd.Ordinal + sizeof(vOldIidCurr[i].firstthunk[j].hint) + vOldIidCurr[i].firstthunk[j].fname.length() + 1
+							static_cast<unsigned int>(vOldIidCurr[i].firstthunk[j].itd.Ordinal),
+						    static_cast<unsigned int>(vOldIidCurr[i].firstthunk[j].itd.Ordinal + sizeof(vOldIidCurr[i].firstthunk[j].hint) + vOldIidCurr[i].firstthunk[j].fname.length() + 1)
 						);
 					if (!(m_occupiedAddresses.back().second & 1))
 						m_occupiedAddresses.back().second += 1;
@@ -754,8 +787,8 @@ namespace PeLib
 			// store the recalculated values
 			if (fixEntries)
 			{
-			    m_vNewiid[i].impdesc.OriginalFirstThunk = dwPoft;
-			    m_vNewiid[i].impdesc.Name = dwPdll;
+				m_vNewiid[i].impdesc.OriginalFirstThunk = dwPoft;
+				m_vNewiid[i].impdesc.Name = dwPdll;
 			}
 
 			dllsize += static_cast<unsigned int>(m_vNewiid[i].name.size()) + 1;

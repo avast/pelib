@@ -77,23 +77,23 @@ namespace PeLib
 			return ERROR_OPENING_FILE;
 		}
 
-		unsigned int dwFileSize = fileSize(ifFile);
-		unsigned int dwOffset = peHeader.rvaToOffset(peHeader.getIddIatRva());
-		unsigned int dwSize = peHeader.getIddIatSize();
+		std::uint64_t ulFileSize = fileSize(ifFile);
+		std::uint64_t dwOffset = peHeader.rvaToOffset(peHeader.getIddIatRva());
+		std::uint64_t dwSize = peHeader.getIddIatSize();
 
-		if (dwFileSize <= dwOffset)
+		if (ulFileSize <= dwOffset)
 		{
 			return ERROR_INVALID_FILE;
 		}
 
-		dwSize = std::min(dwFileSize - dwOffset, dwSize);
+		dwSize = std::min(ulFileSize - dwOffset, dwSize);
 		ifFile.seekg(dwOffset, std::ios::beg);
 
 		std::vector<byte> vBuffer(dwSize);
 		ifFile.read(reinterpret_cast<char*>(vBuffer.data()), dwSize);
 
 		InputBuffer inpBuffer{vBuffer};
-		return IatDirectory::read(inpBuffer, dwOffset, dwFileSize);
+		return IatDirectory::read(inpBuffer, dwOffset, ulFileSize);
 	}
 
 }

@@ -57,7 +57,7 @@ namespace
 	bool RichHeader::analyze(bool ignoreInvalidKey)
 	{
 		bool hValid = true;
-		const auto decSize = decryptedHeader.size();
+		size_t decSize = decryptedHeader.size();
 		if (decSize < 4)
 		{
 			return false;
@@ -79,7 +79,7 @@ namespace
 		const word mask2 = (1 << (8 * sizeof(byte))) - 1;
 		PELIB_IMAGE_RICH_HEADER_RECORD record;
 
-		for (auto i = 4; i + 1 < decSize; i += 2)
+		for (size_t i = 4; i + 1 < decSize; i += 2)
 		{
 			headerIsValid = hValid;
 			const word id = decryptedHeader[i] >> (8 * sizeof(word));

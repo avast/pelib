@@ -28,8 +28,8 @@ namespace PeLib
 			return ERROR_OPENING_FILE;
 		}
 
-		unsigned int filesize = fileSize(ifFile);
-		if (filesize < uiOffset + uiSize)
+		std::uint64_t ulFileSize = fileSize(ifFile);
+		if (ulFileSize < uiOffset + uiSize)
 		{
 			return ERROR_INVALID_FILE;
 		}

@@ -48,23 +48,28 @@ namespace PeLib
 					return ERROR_OPENING_FILE;
 				}
 
-				const auto ulFileSize = fileSize(ifFile);
-				const auto uiOffset = peHeader.rvaToOffset(peHeader.getIddDelayImportRva());
-				const auto uiSize = peHeader.getIddDelayImportSize();
-				if (ulFileSize < uiOffset + uiSize)
+				std::uint64_t ulFileSize = fileSize(ifFile);
+				std::uint64_t uiOffset = peHeader.rvaToOffset(peHeader.getIddDelayImportRva());
+				if (uiOffset >= ulFileSize)
 				{
 					return ERROR_INVALID_FILE;
 				}
 
-				ifFile.seekg(uiOffset, std::ios::beg);
-				std::vector<unsigned char> dump;
-				dump.resize(uiSize);
-				ifFile.read(reinterpret_cast<char*>(dump.data()), uiSize);
-				InputBuffer inputbuffer(dump);
 				PELIB_IMAGE_DELAY_IMPORT_DIRECTORY_RECORD<bits> rec;
+				std::vector<unsigned char> dump;
+				dump.resize(PELIB_IMAGE_SIZEOF_DELAY_IMPORT_DIRECTORY_RECORD);
 
-				for (std::size_t i = 0, e = uiSize / PELIB_IMAGE_SIZEOF_DELAY_IMPORT_DIRECTORY_RECORD; i < e; ++i)
+				// Keep loading until we encounter an entry filles with zeros
+				for(std::size_t i = 0;; i += PELIB_IMAGE_SIZEOF_DELAY_IMPORT_DIRECTORY_RECORD)
 				{
+					InputBuffer inputbuffer(dump);
+
+					// Read the n-th import sdirectory entry
+					if (!ifFile.seekg(uiOffset + i, std::ios::beg))
+						break;
+					if (!ifFile.read(reinterpret_cast<char*>(dump.data()), PELIB_IMAGE_SIZEOF_DELAY_IMPORT_DIRECTORY_RECORD))
+						break;
+
 					rec.init();
 					inputbuffer >> rec.Attributes;
 					inputbuffer >> rec.NameRva;
@@ -82,7 +87,7 @@ namespace PeLib
 					}
 
 					unsigned int uiDelayImportsRva = peHeader.offsetToRva(uiOffset);
-					unsigned int uiDelayImportsVa = peHeader.rvaToVa(uiDelayImportsRva);
+					unsigned int uiDelayImportsVa = (unsigned int)peHeader.rvaToVa(uiDelayImportsRva);
 
 					// Convert absolute virtual addresses to relative virtual addresses.
 					// We do this by calculating whether address is closer to RVA of directory or VA of the directory.
@@ -120,7 +125,7 @@ namespace PeLib
 					rec.DelayImportNameTableOffset = peHeader.rvaToOffset(rec.DelayImportNameTableRva);
 
 					// Get name of library
-					getStringFromFileOffset(ifFile, rec.Name, peHeader.rvaToOffset(rec.NameRva), IMPORT_LIBRARY_MAX_LENGTH);
+					getStringFromFileOffset(ifFile, rec.Name, (std::size_t)peHeader.rvaToOffset(rec.NameRva), IMPORT_LIBRARY_MAX_LENGTH);
 
 					// Get names first
 					// Address table is not guaranteed to be null-terminated and therefore we need to first read name table.

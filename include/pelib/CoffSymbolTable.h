@@ -17,16 +17,20 @@ namespace PeLib
 	class CoffSymbolTable
 	{
 		private:
-			dword stringTableSize;
+			std::size_t stringTableSize;
 			dword numberOfStoredSymbols;
 			std::vector<unsigned char> stringTable;
 			std::vector<unsigned char> symbolTableDump;
 			std::vector<PELIB_IMAGE_COFF_SYMBOL> symbolTable;
+			LoaderError m_ldrError;
 
 			void read(InputBuffer& inputbuffer, unsigned int uiSize);
 		public:
 			CoffSymbolTable();
 			~CoffSymbolTable();
+
+			LoaderError loaderError() const;
+			void setLoaderError(LoaderError ldrError);
 
 			int read(const std::string& strFilename, unsigned int uiOffset, unsigned int uiSize);
 			std::size_t getSizeOfStringTable() const;

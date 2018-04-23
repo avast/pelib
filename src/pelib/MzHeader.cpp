@@ -56,7 +56,7 @@ namespace PeLib
 		ibBuffer >> m_idhHeader.e_lfanew;
 	}
 
-	MzHeader::MzHeader(): originalOffset(0) {}
+	MzHeader::MzHeader(): originalOffset(0), m_ldrError() {}
 
 	/**
 	* Tests if the currently loaded MZ header is a valid MZ header.
@@ -71,17 +71,31 @@ namespace PeLib
 		return isValid(e_magic);
 	}
 
-    bool MzHeader::isValid(Field f) const
-    {
-        if (f == e_magic)
-        {
-            return m_idhHeader.e_magic == PELIB_IMAGE_DOS_SIGNATURE;
-        }
-        else
-        {
-            return true;
-        }
-    }
+	bool MzHeader::isValid(Field f) const
+	{
+		if (f == e_magic)
+		{
+			return m_idhHeader.e_magic == PELIB_IMAGE_DOS_SIGNATURE;
+		}
+		else
+		{
+			return true;
+		}
+	}
+
+	void MzHeader::setLoaderError(LoaderError ldrError)
+	{
+		// Do not override an existing loader error
+		if (m_ldrError == LDR_ERROR_NONE)
+		{
+			m_ldrError = ldrError;
+		}
+	}
+
+	LoaderError MzHeader::loaderError() const
+	{
+		return m_ldrError;
+	}
 
 	/**
 	* Corrects all erroneous values of the current MZ header. Note that this function does not correct the
@@ -95,13 +109,13 @@ namespace PeLib
 		setMagicNumber(PELIB_IMAGE_DOS_SIGNATURE);
 	}
 
-    void MzHeader::makeValid(Field f)
-    {
-        if (f == e_magic)
-        {
-            setMagicNumber(PELIB_IMAGE_DOS_SIGNATURE);
-        }
-    }
+	void MzHeader::makeValid(Field f)
+	{
+		if (f == e_magic)
+		{
+			setMagicNumber(PELIB_IMAGE_DOS_SIGNATURE);
+		}
+	}
 
 	/**
 	* Reads the MZ header from a file. Note that this function does not verify if a file is actually a MZ file.
@@ -119,9 +133,16 @@ namespace PeLib
 			return ERROR_OPENING_FILE;
 		}
 
-		if (fileSize(ifFile) < PELIB_IMAGE_DOS_HEADER::size())
+		std::uint64_t ulFileSize = fileSize(ifFile);
+		if (ulFileSize < PELIB_IMAGE_DOS_HEADER::size())
 		{
 			return ERROR_INVALID_FILE;
+		}
+
+		// Windows loader refuses to load any file which is larger than 0xFFFFFFFF
+		if ((ulFileSize >> 32) != 0)
+		{
+			setLoaderError(LDR_ERROR_FILE_TOO_BIG);
 		}
 
 		ifFile.seekg(0, std::ios::beg);
@@ -138,6 +159,15 @@ namespace PeLib
 
 		InputBuffer ibBuffer(vBuffer);
 		read(ibBuffer);
+		
+		// For 64-bit systems, the e_lfanew must be aligned to 4
+		if (m_idhHeader.e_lfanew & 3)
+			setLoaderError(LDR_ERROR_E_LFANEW_UNALIGNED);
+
+		// The offset of PE header must not be out of file
+		if (m_idhHeader.e_lfanew > (std::uint32_t)ulFileSize)
+			setLoaderError(LDR_ERROR_E_LFANEW_OUT_OF_FILE);
+
 		return ERROR_NONE;
 	}
 
