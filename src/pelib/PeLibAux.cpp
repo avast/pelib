@@ -10,6 +10,8 @@
 * of PeLib.
 */
 
+#include <vector>
+
 #ifdef _MSC_VER
   #include <ctype.h>
 #endif
@@ -23,7 +25,7 @@ namespace PeLib
 	const qword PELIB_IMAGE_ORDINAL_FLAGS<64>::PELIB_IMAGE_ORDINAL_FLAG = 0x8000000000000000ULL;
 
 	// Keep in sync with PeLib::LoaderError!!!
-	static const LoaderErrorString LdrErrStrings[] =
+	static const std::vector<LoaderErrorString> LdrErrStrings =
 	{
 		{"LDR_ERROR_NONE",                         "No error"},
 		{"LDR_ERROR_FILE_TOO_BIG",                 "The file is larger than 4GB - 1"},
@@ -157,7 +159,7 @@ namespace PeLib
 		std::size_t index = (std::size_t)ldrError;
 
 		// When the index is within range
-		if (index < _countof(LdrErrStrings))
+		if (index < LdrErrStrings.size())
 		{
 			return userFriendly ? LdrErrStrings[index].loaderErrorUserFriendly : LdrErrStrings[index].loaderErrorString;
 		}
