@@ -149,16 +149,11 @@ namespace PeLib
 						InputBuffer inb(vBuffer);
 						inb >> nameAddr.Value;
 
+						// Value of zero means that this is the end of the bound import name table
 						if (nameAddr.Value == 0)
 						{
 							break;
 						}
-						else if (std::abs(static_cast<std::int64_t>(nameAddr.Value) - uiDelayImportsVa) <
-							std::abs(static_cast<std::int64_t>(nameAddr.Value) - uiDelayImportsRva))
-						{
-							nameAddr.Value -= peHeader.getImageBase();
-						}
-
 						nameAddresses.push_back(nameAddr);
 					} while (true);
 
@@ -182,12 +177,14 @@ namespace PeLib
 						InputBuffer inb(vBuffer);
 						inb >> addr.Value;
 
+						// The value of zero means terminator of the function table
 						if (addr.Value == 0)
 						{
 							break;
 						}
-						else if (std::abs(static_cast<std::int64_t>(addr.Value) - uiDelayImportsVa) <
-							std::abs(static_cast<std::int64_t>(addr.Value) - uiDelayImportsRva))
+
+						// The table is always in the image itself
+						if(peHeader.getImageBase() <= addr.Value && addr.Value < peHeader.getImageBase() + peHeader.getSizeOfImage())
 						{
 							addr.Value -= peHeader.getImageBase();
 						}
@@ -205,17 +202,26 @@ namespace PeLib
 							continue;
 						}
 
-						std::vector<byte> vBuffer(sizeof(actFunc->hint));
-						ifFile.seekg(peHeader.rvaToOffset(nameAddresses[i].Value), std::ios::beg);
-						ifFile.read(reinterpret_cast<char*>(vBuffer.data()), sizeof(actFunc->hint));
-						if (!ifFile || ifFile.gcount() < sizeof(actFunc->hint))
+						// Delay Import By Name?
+						if ((nameAddresses[i].Value & PELIB_IMAGE_ORDINAL_FLAGS<bits>::PELIB_IMAGE_ORDINAL_FLAG) == 0)
 						{
-							break;
-						}
+							std::vector<byte> vBuffer(sizeof(actFunc->hint));
+							ifFile.seekg(peHeader.rvaToOffset(nameAddresses[i].Value), std::ios::beg);
+							ifFile.read(reinterpret_cast<char*>(vBuffer.data()), sizeof(actFunc->hint));
+							if (!ifFile || ifFile.gcount() < sizeof(actFunc->hint))
+							{
+								break;
+							}
 
-						InputBuffer inb(vBuffer);
-						inb >> actFunc->hint;
-						getStringFromFileOffset(ifFile, actFunc->fname, ifFile.tellg(), IMPORT_SYMBOL_MAX_LENGTH);
+							InputBuffer inb(vBuffer);
+							inb >> actFunc->hint;
+							getStringFromFileOffset(ifFile, actFunc->fname, ifFile.tellg(), IMPORT_SYMBOL_MAX_LENGTH);
+						}
+						else
+						{
+							actFunc->Ordinal = nameAddresses[i].Value & ~PELIB_IMAGE_ORDINAL_FLAGS<bits>::PELIB_IMAGE_ORDINAL_FLAG;
+							actFunc->hint = 0;
+						}
 					}
 
 					records.push_back(rec);
