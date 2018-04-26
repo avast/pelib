@@ -137,11 +137,15 @@ namespace PeLib
 					for(;;)
 					{
 						PELIB_VAR_SIZE<bits> nameAddr;
+						std::vector<byte> vBuffer(sizeof(nameAddr.Value));
 
 						// Read the value from the file
-						ifFile.read(reinterpret_cast<char*>(&nameAddr.Value), sizeof(nameAddr.Value));
+						ifFile.read(reinterpret_cast<char*>(vBuffer.data()), sizeof(nameAddr.Value));
 						if (!ifFile || ifFile.gcount() < sizeof(nameAddr.Value))
 							break;
+
+						InputBuffer inb(vBuffer);
+						inb >> nameAddr.Value;
 
 						// Value of zero means that this is the end of the bound import name table
 						if (nameAddr.Value == 0)
@@ -165,11 +169,15 @@ namespace PeLib
 					for (std::size_t i = 0, e = nameAddresses.size(); i < e; ++i)
 					{
 						PELIB_VAR_SIZE<bits> funcAddr;
+						std::vector<byte> vBuffer(sizeof(funcAddr.Value));
 
 						// Read the value from the file
-						ifFile.read(reinterpret_cast<char*>(&funcAddr.Value), sizeof(funcAddr.Value));
+						ifFile.read(reinterpret_cast<char*>(vBuffer.data()), sizeof(funcAddr.Value));
 						if (!ifFile || ifFile.gcount() < sizeof(funcAddr.Value))
 							break;
+
+						InputBuffer inb(vBuffer);
+						inb >> funcAddr.Value;
 
 						// The value of zero means terminator of the function table
 						if (funcAddr.Value == 0)
