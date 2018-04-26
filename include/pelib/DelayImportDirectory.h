@@ -222,8 +222,7 @@ namespace PeLib
 						}
 						else
 						{
-							actFunc->Ordinal = nameAddresses[i].Value & 0xFFFF;
-							actFunc->hint = 0;
+							actFunc->hint = (word)(nameAddresses[i].Value & 0xFFFF);
 						}
 					}
 

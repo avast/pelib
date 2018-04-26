@@ -1079,10 +1079,9 @@ namespace PeLib
 	{
 		PELIB_VAR_SIZE<bits> address;
 		word hint;
-		std::uint32_t Ordinal;
 		std::string fname;
 
-		PELIB_DELAY_IMPORT() : Ordinal(0), hint(0)
+		PELIB_DELAY_IMPORT() : hint(0)
 		{
 
 		}
