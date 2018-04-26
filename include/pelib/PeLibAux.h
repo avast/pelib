@@ -78,9 +78,6 @@ namespace PeLib
 		LDR_ERROR_INVALID_SIZE_OF_IMAGE,            // IMAGE_OPTIONAL_HEADER::SizeOfImage doesn't match the (header+sections)
 		LDR_ERROR_FILE_IS_CUT,                      // The PE file is cut
 
-		LDR_ERROR_COFF_POS_OVERFLOW,                // The position of the COFF debug info overflowed
-		LDR_ERROR_COFF_POS_OUT_OF_FILE,             // The position of the COFF debug info is out of the file
-
 		LDR_ERROR_MAX
 	};
 

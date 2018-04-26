@@ -1161,6 +1161,8 @@ namespace PeLib
 			}
 
 			// Check for raw data beyond end-of-file
+			// Note that Windows loader doesn't check this on files that are mapped as single section.
+			// We will do that nontheless, because we want to know that a file is cut.
 			if (PointerToRawData != 0 && EndOfRawData > (std::uint32_t)ulFileSize)
 				bRawDataBeyondEOF = true;
 		}
