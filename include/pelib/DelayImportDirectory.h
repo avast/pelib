@@ -42,18 +42,14 @@ namespace PeLib
 
 			// Delay-import descriptors made by MS Visual C++ 6.0 has an old format
 			// of delay import directory, where all entries are VAs (as opposite to RVAs from newer MS compilers).
-			// We convert the delay-import directory entries to RVAs by checking 
-			// whether their value is closer to DelayImportDescriptorVA or DelayImportDescriptorRVA
-			VAR4_8 convertVAtoRVA(const PeHeaderT<bits>& peHeader, VAR4_8 valueToConvert)
+			// We convert the delay-import directory entries to RVAs by checking the lowest bit in the delay-import descriptor's Attributes value
+			VAR4_8 normalizeDelayImportValue(const PELIB_IMAGE_DELAY_IMPORT_DIRECTORY_RECORD<bits> & rec, const PeHeaderT<bits>& peHeader, VAR4_8 valueToConvert)
 			{
 				// Ignore zero items
 				if (valueToConvert != 0)
 				{
-					VAR4_8 delayImportRVA = peHeader.getIddDelayImportRva();
-					VAR4_8 delayImportVA = peHeader.rvaToVa(delayImportRVA);
-
-					if (std::abs(static_cast<int>(delayImportVA - valueToConvert)) <
-						std::abs(static_cast<int>(delayImportRVA - valueToConvert)))
+					// Is this the old format version?
+					if((rec.Attributes & 0x01) == 0)
 					{
 						valueToConvert = valueToConvert - peHeader.getImageBase();
 					}
@@ -110,13 +106,14 @@ namespace PeLib
 					}
 
 					// Convert older (MS Visual C++ 6.0) delay-import descriptor to newer one.
+					// These delay-import descriptors are distinguishable by lowest bit in rec.Attributes to be zero.
 					// Sample: 2775d97f8bdb3311ace960a42eee35dbec84b9d71a6abbacb26c14e83f5897e4
-					rec.NameRva                    = (dword)convertVAtoRVA(peHeader, rec.NameRva);
-					rec.ModuleHandleRva            = (dword)convertVAtoRVA(peHeader, rec.ModuleHandleRva);
-					rec.DelayImportAddressTableRva = (dword)convertVAtoRVA(peHeader, rec.DelayImportAddressTableRva);
-					rec.DelayImportNameTableRva    = (dword)convertVAtoRVA(peHeader, rec.DelayImportNameTableRva);
-					rec.BoundDelayImportTableRva   = (dword)convertVAtoRVA(peHeader, rec.BoundDelayImportTableRva);
-					rec.UnloadDelayImportTableRva  = (dword)convertVAtoRVA(peHeader, rec.UnloadDelayImportTableRva);
+					rec.NameRva                    = (dword)normalizeDelayImportValue(rec, peHeader, rec.NameRva);
+					rec.ModuleHandleRva            = (dword)normalizeDelayImportValue(rec, peHeader, rec.ModuleHandleRva);
+					rec.DelayImportAddressTableRva = (dword)normalizeDelayImportValue(rec, peHeader, rec.DelayImportAddressTableRva);
+					rec.DelayImportNameTableRva    = (dword)normalizeDelayImportValue(rec, peHeader, rec.DelayImportNameTableRva);
+					rec.BoundDelayImportTableRva   = (dword)normalizeDelayImportValue(rec, peHeader, rec.BoundDelayImportTableRva);
+					rec.UnloadDelayImportTableRva  = (dword)normalizeDelayImportValue(rec, peHeader, rec.UnloadDelayImportTableRva);
 
 					rec.DelayImportAddressTableOffset = peHeader.rvaToOffset(rec.DelayImportAddressTableRva);
 					rec.DelayImportNameTableOffset = peHeader.rvaToOffset(rec.DelayImportNameTableRva);
@@ -124,7 +121,10 @@ namespace PeLib
 					// Get name of library
 					getStringFromFileOffset(ifFile, rec.Name, (std::size_t)peHeader.rvaToOffset(rec.NameRva), IMPORT_LIBRARY_MAX_LENGTH);
 
-					// Get names first
+					//
+					//  LOADING NAME ADDRESSES/NAME ORDINALS
+					//
+
 					// Address table is not guaranteed to be null-terminated and therefore we need to first read name table.
 					ifFile.seekg(rec.DelayImportNameTableOffset, std::ios::beg);
 					if(!ifFile)
@@ -132,98 +132,89 @@ namespace PeLib
 						return ERROR_INVALID_FILE;
 					}
 
+					// Read all RVAs (or VAs) of import names
 					std::vector<PELIB_VAR_SIZE<bits>> nameAddresses;
-					do
+					for(;;)
 					{
 						PELIB_VAR_SIZE<bits> nameAddr;
-						std::vector<byte> vBuffer(sizeof(nameAddr.Value));
-						ifFile.read(reinterpret_cast<char*>(vBuffer.data()), sizeof(nameAddr.Value));
-						if (!ifFile || ifFile.gcount() < sizeof(nameAddr.Value))
-						{
-							break;
-						}
 
-						InputBuffer inb(vBuffer);
-						inb >> nameAddr.Value;
+						// Read the value from the file
+						ifFile.read(reinterpret_cast<char*>(&nameAddr.Value), sizeof(nameAddr.Value));
+						if (!ifFile || ifFile.gcount() < sizeof(nameAddr.Value))
+							break;
 
 						// Value of zero means that this is the end of the bound import name table
 						if (nameAddr.Value == 0)
 							break;
-
-						// If the highest bit is set, then it means that its not a name, but an ordinal
-						// If not, we need to check whether this is an VA-based delay-import descriptor
-						if (!(nameAddr.Value & PELIB_IMAGE_ORDINAL_FLAGS<bits>::PELIB_IMAGE_ORDINAL_FLAG))
-						{
-							nameAddr.Value = convertVAtoRVA(peHeader, nameAddr.Value);
-						}
-
 						nameAddresses.push_back(nameAddr);
-					} while (true);
+					}
 
-					// Get addresses
+					//
+					//  LOADING FUNCTION POINTERS
+					//
+
+					// Move to the offset of function addresses
 					ifFile.seekg(rec.DelayImportAddressTableOffset, std::ios::beg);
 					if (!ifFile)
 					{
 						return ERROR_INVALID_FILE;
 					}
 
+					// Read all (VAs) of import names
+					std::vector<PELIB_VAR_SIZE<bits>> funcAddresses;
 					for (std::size_t i = 0, e = nameAddresses.size(); i < e; ++i)
 					{
-						PELIB_VAR_SIZE<bits> addr;
-						std::vector<byte> vBuffer(sizeof(addr.Value));
-						ifFile.read(reinterpret_cast<char*>(vBuffer.data()), sizeof(addr.Value));
-						if (!ifFile || ifFile.gcount() < sizeof(addr.Value))
-						{
-							break;
-						}
+						PELIB_VAR_SIZE<bits> funcAddr;
 
-						InputBuffer inb(vBuffer);
-						inb >> addr.Value;
+						// Read the value from the file
+						ifFile.read(reinterpret_cast<char*>(&funcAddr.Value), sizeof(funcAddr.Value));
+						if (!ifFile || ifFile.gcount() < sizeof(funcAddr.Value))
+							break;
 
 						// The value of zero means terminator of the function table
-						if (addr.Value == 0)
-						{
+						if (funcAddr.Value == 0)
 							break;
-						}
-
-						// The table is always in the image itself
-						if(peHeader.getImageBase() <= addr.Value && addr.Value < peHeader.getImageBase() + peHeader.getSizeOfImage())
-						{
-							addr.Value -= peHeader.getImageBase();
-						}
-
-						PELIB_DELAY_IMPORT<bits> function;
-						function.address.Value = addr.Value;
-						rec.addFunction(function);
+						funcAddresses.push_back(funcAddr);
 					}
 
-					for (std::size_t i = 0, e = rec.getNumberOfFunctions(); i < e; ++i)
+					//
+					//  MERGE BOTH TOGETHER
+					//
+
+					std::size_t numberOfFunctions = std::min(nameAddresses.size(), funcAddresses.size());
+					for (std::size_t i = 0; i < numberOfFunctions; i++)
 					{
-						auto *actFunc = rec.getFunction(i);
-						if (!actFunc)
-						{
-							continue;
-						}
+						PELIB_DELAY_IMPORT<bits> function;
+						PELIB_VAR_SIZE<bits> nameAddr = nameAddresses[i];
+						PELIB_VAR_SIZE<bits> funcAddr = funcAddresses[i];
 
-						// Delay Import By Name?
-						if ((nameAddresses[i].Value & PELIB_IMAGE_ORDINAL_FLAGS<bits>::PELIB_IMAGE_ORDINAL_FLAG) == 0)
+						// Check name address. It could be ordinal, VA or RVA
+						if (!(nameAddr.Value & PELIB_IMAGE_ORDINAL_FLAGS<bits>::PELIB_IMAGE_ORDINAL_FLAG))
 						{
-							std::vector<byte> vBuffer(sizeof(actFunc->hint));
-							ifFile.seekg(peHeader.rvaToOffset(nameAddresses[i].Value), std::ios::beg);
-							ifFile.read(reinterpret_cast<char*>(vBuffer.data()), sizeof(actFunc->hint));
-							if (!ifFile || ifFile.gcount() < sizeof(actFunc->hint))
-							{
+							// Convert value to RVA, if needed
+							nameAddr.Value = normalizeDelayImportValue(rec, peHeader, nameAddr.Value);
+
+							// Read the function hint
+							ifFile.seekg(peHeader.rvaToOffset(nameAddr.Value), std::ios::beg);
+							ifFile.read(reinterpret_cast<char*>(&function.hint), sizeof(function.hint));
+							if (!ifFile || ifFile.gcount() < sizeof(function.hint))
 								break;
-							}
 
-							InputBuffer inb(vBuffer);
-							inb >> actFunc->hint;
-							getStringFromFileOffset(ifFile, actFunc->fname, ifFile.tellg(), IMPORT_SYMBOL_MAX_LENGTH);
+							// Read the function name
+							getStringFromFileOffset(ifFile, function.fname, ifFile.tellg(), IMPORT_SYMBOL_MAX_LENGTH);
 						}
 						else
 						{
-							actFunc->hint = (word)(nameAddresses[i].Value & 0xFFFF);
+							function.hint = (word)(nameAddr.Value & 0xFFFF);
 						}
+
+						// Fill-in function address. The table is always in the image itself
+						if (peHeader.getImageBase() <= funcAddr.Value && funcAddr.Value < peHeader.getImageBase() + peHeader.getSizeOfImage())
+							funcAddr.Value -= peHeader.getImageBase();
+						function.address.Value = funcAddr.Value;
+
+						// Insert the function to the list
+						rec.addFunction(function);
 					}
 
 					records.push_back(rec);
