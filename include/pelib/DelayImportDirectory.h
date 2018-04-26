@@ -19,6 +19,7 @@ namespace PeLib
 	class DelayImportDirectory
 	{
 		typedef typename std::vector<PELIB_IMAGE_DELAY_IMPORT_DIRECTORY_RECORD<bits> >::const_iterator DelayImportDirectoryIterator;
+		typedef typename FieldSizes<bits>::VAR4_8 VAR4_8;
 
 		private:
 			std::vector<PELIB_IMAGE_DELAY_IMPORT_DIRECTORY_RECORD<bits> > records;
@@ -37,6 +38,28 @@ namespace PeLib
 			~DelayImportDirectory()
 			{
 
+			}
+
+			// Delay-import descriptors made by MS Visual C++ 6.0 has an old format
+			// of delay import directory, where all entries are VAs (as opposite to RVAs from newer MS compilers).
+			// We convert the delay-import directory entries to RVAs by checking 
+			// whether their value is closer to DelayImportDescriptorVA or DelayImportDescriptorRVA
+			VAR4_8 convertVAtoRVA(const PeHeaderT<bits>& peHeader, VAR4_8 valueToConvert)
+			{
+				// Ignore zero items
+				if (valueToConvert != 0)
+				{
+					VAR4_8 delayImportRVA = peHeader.getIddDelayImportRva();
+					VAR4_8 delayImportVA = peHeader.rvaToVa(delayImportRVA);
+
+					if (std::abs(static_cast<int>(delayImportVA - valueToConvert)) <
+						std::abs(static_cast<int>(delayImportRVA - valueToConvert)))
+					{
+						valueToConvert = valueToConvert - peHeader.getImageBase();
+					}
+				}
+
+				return valueToConvert;
 			}
 
 			int read(const std::string& strFilename, const PeHeaderT<bits>& peHeader)
@@ -86,41 +109,15 @@ namespace PeLib
 						break;
 					}
 
-					unsigned int uiDelayImportsRva = peHeader.offsetToRva(uiOffset);
-					unsigned int uiDelayImportsVa = (unsigned int)peHeader.rvaToVa(uiDelayImportsRva);
+					// Convert older (MS Visual C++ 6.0) delay-import descriptor to newer one.
+					// Sample: 2775d97f8bdb3311ace960a42eee35dbec84b9d71a6abbacb26c14e83f5897e4
+					rec.NameRva                    = (dword)convertVAtoRVA(peHeader, rec.NameRva);
+					rec.ModuleHandleRva            = (dword)convertVAtoRVA(peHeader, rec.ModuleHandleRva);
+					rec.DelayImportAddressTableRva = (dword)convertVAtoRVA(peHeader, rec.DelayImportAddressTableRva);
+					rec.DelayImportNameTableRva    = (dword)convertVAtoRVA(peHeader, rec.DelayImportNameTableRva);
+					rec.BoundDelayImportTableRva   = (dword)convertVAtoRVA(peHeader, rec.BoundDelayImportTableRva);
+					rec.UnloadDelayImportTableRva  = (dword)convertVAtoRVA(peHeader, rec.UnloadDelayImportTableRva);
 
-					// Convert absolute virtual addresses to relative virtual addresses.
-					// We do this by calculating whether address is closer to RVA of directory or VA of the directory.
-					if (std::abs(static_cast<int>(uiDelayImportsVa - rec.NameRva)) <
-						std::abs(static_cast<int>(uiDelayImportsRva - rec.NameRva)))
-					{
-						rec.NameRva -= peHeader.getImageBase();
-					}
-					if (std::abs(static_cast<int>(uiDelayImportsVa - rec.ModuleHandleRva)) <
-						std::abs(static_cast<int>(uiDelayImportsRva - rec.ModuleHandleRva)))
-					{
-						rec.ModuleHandleRva -= peHeader.getImageBase();
-					}
-					if (std::abs(static_cast<int>(uiDelayImportsVa - rec.DelayImportAddressTableRva)) <
-						std::abs(static_cast<int>(uiDelayImportsRva - rec.DelayImportAddressTableRva)))
-					{
-						rec.DelayImportAddressTableRva -= peHeader.getImageBase();
-					}
-					if (std::abs(static_cast<int>(uiDelayImportsVa - rec.DelayImportNameTableRva)) <
-						std::abs(static_cast<int>(uiDelayImportsRva - rec.DelayImportNameTableRva)))
-					{
-						rec.DelayImportNameTableRva -= peHeader.getImageBase();
-					}
-					if (std::abs(static_cast<int>(uiDelayImportsVa - rec.BoundDelayImportTableRva)) <
-						std::abs(static_cast<int>(uiDelayImportsRva - rec.BoundDelayImportTableRva)))
-					{
-						rec.BoundDelayImportTableRva -= peHeader.getImageBase();
-					}
-					if (std::abs(static_cast<int>(uiDelayImportsVa - rec.UnloadDelayImportTableRva)) <
-						std::abs(static_cast<int>(uiDelayImportsRva - rec.UnloadDelayImportTableRva)))
-					{
-						rec.UnloadDelayImportTableRva -= peHeader.getImageBase();
-					}
 					rec.DelayImportAddressTableOffset = peHeader.rvaToOffset(rec.DelayImportAddressTableRva);
 					rec.DelayImportNameTableOffset = peHeader.rvaToOffset(rec.DelayImportNameTableRva);
 
@@ -151,9 +148,15 @@ namespace PeLib
 
 						// Value of zero means that this is the end of the bound import name table
 						if (nameAddr.Value == 0)
-						{
 							break;
+
+						// If the highest bit is set, then it means that its not a name, but an ordinal
+						// If not, we need to check whether this is an VA-based delay-import descriptor
+						if (!(nameAddr.Value & PELIB_IMAGE_ORDINAL_FLAGS<bits>::PELIB_IMAGE_ORDINAL_FLAG))
+						{
+							nameAddr.Value = convertVAtoRVA(peHeader, nameAddr.Value);
 						}
+
 						nameAddresses.push_back(nameAddr);
 					} while (true);
 
@@ -219,7 +222,7 @@ namespace PeLib
 						}
 						else
 						{
-							actFunc->Ordinal = nameAddresses[i].Value & ~PELIB_IMAGE_ORDINAL_FLAGS<bits>::PELIB_IMAGE_ORDINAL_FLAG;
+							actFunc->Ordinal = nameAddresses[i].Value & 0xFFFF;
 							actFunc->hint = 0;
 						}
 					}
