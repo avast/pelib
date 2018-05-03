@@ -1247,8 +1247,8 @@ namespace PeLib
 			header.OptionalHeader.Magic != PeLib::PELIB_IMAGE_NT_OPTIONAL_HDR64_MAGIC)
 			setLoaderError(LDR_ERROR_NO_OPTHDR_MAGIC);
 
-		// SizeOfHeaders must be nonzero
-		if(header.OptionalHeader.SizeOfHeaders == 0)
+		// SizeOfHeaders must be nonzero if not a single subsection
+		if(header.OptionalHeader.SectionAlignment >= PELIB_PAGE_SIZE && header.OptionalHeader.SizeOfHeaders == 0)
 			setLoaderError(LDR_ERROR_SIZE_OF_HEADERS_ZERO);
 
 		// File alignment must not be 0
