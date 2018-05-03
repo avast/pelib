@@ -1235,8 +1235,12 @@ namespace PeLib
 		// Verify the NT signature
 		if (header.Signature != PeLib::PELIB_IMAGE_NT_SIGNATURE)
 			setLoaderError(LDR_ERROR_NO_NT_SIGNATURE);
-		if (header.FileHeader.Machine == 0 || header.FileHeader.SizeOfOptionalHeader == 0)
+
+    // Zoo\PE-culiarities\ok_but_total_fuckups\SizeOfOptionalHeader_Zero\unpacked.ex_ 
+    // 7baebc6d9f2185fafa760c875ab1386f385a0b3fecf2e6ae339abb4d9ac58f3e
+    if (header.FileHeader.Machine == 0 && header.FileHeader.SizeOfOptionalHeader == 0)
 			setLoaderError(LDR_ERROR_FILE_HEADER_INVALID);
+
 		if (!(header.FileHeader.Characteristics & PeLib::PELIB_IMAGE_FILE_EXECUTABLE_IMAGE))
 			setLoaderError(LDR_ERROR_IMAGE_NON_EXECUTABLE);
 		if (header.OptionalHeader.Magic != PeLib::PELIB_IMAGE_NT_OPTIONAL_HDR32_MAGIC &&
