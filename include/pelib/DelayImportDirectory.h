@@ -55,12 +55,12 @@ namespace PeLib
 						// Contains artificially created delay import directory with incorrect values:
 						//
 						//  Attributes                      0x00000000 <-- Old MS delay import record, contains VAs
-						// 	NameRva                         0x004010e6
-						// 	ModuleHandleRva                 0x00000000
-						// 	DelayImportAddressTableRva      0x00001140 <-- WRONG! This is an RVA
-						// 	DelayImportNameTableRva         0x004010c0
-						// 	BoundDelayImportTableRva        0x00000000
-						// 	...
+						//  NameRva                         0x004010e6
+						//  ModuleHandleRva                 0x00000000
+						//  DelayImportAddressTableRva      0x00001140 <-- WRONG! This is an RVA
+						//  DelayImportNameTableRva         0x004010c0
+						//  BoundDelayImportTableRva        0x00000000
+						//  ...
 
 						if (valueToConvert > peHeader.getImageBase())
 						{
