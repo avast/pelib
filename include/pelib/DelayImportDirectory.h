@@ -51,7 +51,21 @@ namespace PeLib
 					// Is this the old format version?
 					if((rec.Attributes & 0x01) == 0)
 					{
-						valueToConvert = valueToConvert - peHeader.getImageBase();
+						// Sample: 0fc4cb0620f95bdd624f2c78eea4d2b59594244c6671cf249526adf2f2cb71ec
+						// Contains artificially created delay import directory with incorrect values:
+						//
+						//  Attributes                      0x00000000 <-- Old MS delay import record, contains VAs
+						// 	NameRva                         0x004010e6
+						// 	ModuleHandleRva                 0x00000000
+						// 	DelayImportAddressTableRva      0x00001140 <-- WRONG! This is an RVA
+						// 	DelayImportNameTableRva         0x004010c0
+						// 	BoundDelayImportTableRva        0x00000000
+						// 	...
+
+						if (valueToConvert > peHeader.getImageBase())
+						{
+							valueToConvert = valueToConvert - peHeader.getImageBase();
+						}
 					}
 				}
 
