@@ -1253,7 +1253,7 @@ namespace PeLib
 		// File alignment must not be 0
 		if(header.OptionalHeader.FileAlignment == 0)
 			setLoaderError(LDR_ERROR_FILE_ALIGNMENT_ZERO);
-		
+
 		// File alignment must be a power of 2
 		if(header.OptionalHeader.FileAlignment & (header.OptionalHeader.FileAlignment-1))
 			setLoaderError(LDR_ERROR_FILE_ALIGNMENT_NOT_POW2);

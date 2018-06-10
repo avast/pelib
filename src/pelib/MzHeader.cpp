@@ -159,7 +159,7 @@ namespace PeLib
 
 		InputBuffer ibBuffer(vBuffer);
 		read(ibBuffer);
-		
+
 		// For 64-bit systems, the e_lfanew must be aligned to 4
 		if (m_idhHeader.e_lfanew & 3)
 			setLoaderError(LDR_ERROR_E_LFANEW_UNALIGNED);
