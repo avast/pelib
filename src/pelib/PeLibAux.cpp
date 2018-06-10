@@ -63,7 +63,6 @@ namespace PeLib
 		{"LDR_ERROR_FILE_IS_CUT",                  "The PE file is cut" },
 	};
 
-
 	PELIB_IMAGE_FILE_MACHINE_ITERATOR::PELIB_IMAGE_FILE_MACHINE_ITERATOR()
 	{
 
