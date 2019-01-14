@@ -1189,8 +1189,10 @@ namespace PeLib
 				std::uint32_t PointerToRawData = (lastSection.SizeOfRawData != 0) ? lastSection.PointerToRawData : 0;
 				std::uint32_t EndOfRawData = PointerToRawData + lastSection.SizeOfRawData;
 
-				if((lastSection.SizeOfRawData == 0) || (EndOfRawData <= (std::uint32_t)ulFileSize))
+				if ((lastSection.SizeOfRawData == 0) || (EndOfRawData <= (std::uint32_t)ulFileSize))
+				{
 					setLoaderError(LDR_ERROR_FILE_IS_CUT_LOADABLE);
+				}
 			}
 		}
 		return vIshdCurr;
