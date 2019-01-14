@@ -1177,8 +1177,7 @@ namespace PeLib
 		// Did we detect a trimmed file?
 		if (bRawDataBeyondEOF)
 		{
-			// Initially, set the loader error to "The PE file is cut, but loadable"
-			setLoaderError(LDR_ERROR_FILE_IS_CUT);
+			bool bFileLoadable = false;
 
 			// Special exception: Even if cut, the file is still loadable
 			// if the last section is in the file range. This is because
@@ -1192,7 +1191,14 @@ namespace PeLib
 				if ((lastSection.SizeOfRawData == 0) || (EndOfRawData <= (std::uint32_t)ulFileSize))
 				{
 					setLoaderError(LDR_ERROR_FILE_IS_CUT_LOADABLE);
+					bFileLoadable = true;
 				}
+			}
+
+			// If the file is not loadable, set the "file is cut" error
+			if (bFileLoadable == false)
+			{
+				setLoaderError(LDR_ERROR_FILE_IS_CUT);
 			}
 		}
 		return vIshdCurr;
