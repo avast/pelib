@@ -1175,8 +1175,32 @@ namespace PeLib
 		}
 
 		// Did we detect a trimmed file?
-		if(bRawDataBeyondEOF)
-			setLoaderError(LDR_ERROR_FILE_IS_CUT);
+		if (bRawDataBeyondEOF)
+		{
+			bool bFileLoadable = false;
+
+			// Special exception: Even if cut, the file is still loadable
+			// if the last section is in the file range. This is because
+			// the PE loader in Windows only cares about whether the last section is in the file range
+			if (!vIshdCurr.empty())
+			{
+				PELIB_IMAGE_SECTION_HEADER & lastSection = vIshdCurr.back();
+				std::uint32_t PointerToRawData = (lastSection.SizeOfRawData != 0) ? lastSection.PointerToRawData : 0;
+				std::uint32_t EndOfRawData = PointerToRawData + lastSection.SizeOfRawData;
+
+				if ((lastSection.SizeOfRawData == 0) || (EndOfRawData <= (std::uint32_t)ulFileSize))
+				{
+					setLoaderError(LDR_ERROR_FILE_IS_CUT_LOADABLE);
+					bFileLoadable = true;
+				}
+			}
+
+			// If the file is not loadable, set the "file is cut" error
+			if (bFileLoadable == false)
+			{
+				setLoaderError(LDR_ERROR_FILE_IS_CUT);
+			}
+		}
 		return vIshdCurr;
 	}
 

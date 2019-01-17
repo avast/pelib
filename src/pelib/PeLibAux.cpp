@@ -61,6 +61,7 @@ namespace PeLib
 		{"LDR_ERROR_INVALID_SECTION_RAWSIZE",      "Invalid raw data size of a section" },
 		{"LDR_ERROR_INVALID_SIZE_OF_IMAGE",        "IMAGE_OPTIONAL_HEADER::SizeOfImage doesn't match the (header+sections)" },
 		{"LDR_ERROR_FILE_IS_CUT",                  "The PE file is cut" },
+		{"LDR_ERROR_FILE_IS_CUT_LOADABLE",         "The PE file is cut, but loadable" },
 	};
 
 	PELIB_IMAGE_FILE_MACHINE_ITERATOR::PELIB_IMAGE_FILE_MACHINE_ITERATOR()

@@ -77,6 +77,7 @@ namespace PeLib
 		LDR_ERROR_INVALID_SECTION_RAWSIZE,          // Images with normal sections: invalid raw data size
 		LDR_ERROR_INVALID_SIZE_OF_IMAGE,            // IMAGE_OPTIONAL_HEADER::SizeOfImage doesn't match the (header+sections)
 		LDR_ERROR_FILE_IS_CUT,                      // The PE file is cut
+		LDR_ERROR_FILE_IS_CUT_LOADABLE,             // The PE file is cut, but loadable
 
 		LDR_ERROR_MAX
 	};
