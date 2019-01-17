@@ -1182,9 +1182,9 @@ namespace PeLib
 			// Special exception: Even if cut, the file is still loadable
 			// if the last section is in the file range. This is because
 			// the PE loader in Windows only cares about whether the last section is in the file range
-			if (vIshdCurr.size() > 0)
+			if (!vIshdCurr.empty())
 			{
-				PELIB_IMAGE_SECTION_HEADER & lastSection = vIshdCurr[vIshdCurr.size() - 1];
+				PELIB_IMAGE_SECTION_HEADER & lastSection = vIshdCurr.back();
 				std::uint32_t PointerToRawData = (lastSection.SizeOfRawData != 0) ? lastSection.PointerToRawData : 0;
 				std::uint32_t EndOfRawData = PointerToRawData + lastSection.SizeOfRawData;
 
@@ -1277,7 +1277,7 @@ namespace PeLib
 		// File alignment must not be 0
 		if(header.OptionalHeader.FileAlignment == 0)
 			setLoaderError(LDR_ERROR_FILE_ALIGNMENT_ZERO);
-		
+
 		// File alignment must be a power of 2
 		if(header.OptionalHeader.FileAlignment & (header.OptionalHeader.FileAlignment-1))
 			setLoaderError(LDR_ERROR_FILE_ALIGNMENT_NOT_POW2);

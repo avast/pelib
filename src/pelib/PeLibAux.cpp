@@ -64,7 +64,6 @@ namespace PeLib
 		{"LDR_ERROR_FILE_IS_CUT_LOADABLE",         "The PE file is cut, but loadable" },
 	};
 
-
 	PELIB_IMAGE_FILE_MACHINE_ITERATOR::PELIB_IMAGE_FILE_MACHINE_ITERATOR()
 	{
 
