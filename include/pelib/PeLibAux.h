@@ -798,6 +798,7 @@ namespace PeLib
 	};
 
 	const unsigned int PELIB_IMAGE_SIZEOF_SHORT_NAME  = 8;
+	const unsigned int PELIB_IMAGE_SIZEOF_MAX_NAME    = 1024;
 
 	struct PELIB_IMAGE_SECTION_HEADER
 	{
@@ -1211,7 +1212,13 @@ namespace PeLib
 	std::uint64_t fileSize(std::ofstream& file);
 	std::uint64_t fileSize(std::fstream& file);
 	unsigned int alignOffset(unsigned int uiOffset, unsigned int uiAlignment);
-	std::size_t getStringFromFileOffset(std::ifstream &ifFile, std::string &result, std::size_t fileOffset, std::size_t maxLength = 0);
+	std::size_t getStringFromFileOffset(
+			std::ifstream &ifFile,
+			std::string &result,
+			std::size_t fileOffset,
+			std::size_t maxLength = 0,
+			bool isPrintable = false,
+			bool isNotTooLong = false);
 
 	const char * getLoaderErrorString(LoaderError ldrError, bool userFriendly = false);
 

@@ -1052,18 +1052,13 @@ namespace PeLib
 
 				if (stringTableOffset + stringTableIndex <= ulFileSize)
 				{
-					std::string sectionName;
-					getStringFromFileOffset(ifFile, sectionName, (size_t)(stringTableOffset + stringTableIndex), PELIB_IMAGE_SIZEOF_SHORT_NAME);
-					auto nonPrintableChars = std::count_if(sectionName.begin(), sectionName.end(), [](unsigned char c) { return !isprint(c); });
-
-					if (nonPrintableChars == 0)
-					{
-						getStringFromFileOffset(ifFile, ishCurr.StringTableName, (std::size_t)(stringTableOffset + stringTableIndex));
-					}
-					else
-					{
-						ishCurr.StringTableName.clear();
-					}
+					getStringFromFileOffset(
+							ifFile,
+							ishCurr.StringTableName,
+							(std::size_t)(stringTableOffset + stringTableIndex),
+							PELIB_IMAGE_SIZEOF_MAX_NAME,
+							true,
+							true);
 				}
 			}
 			else

@@ -168,7 +168,24 @@ namespace PeLib
 		return "LDR_ERROR_VALUE_OUT_OF_RANGE";
 	}
 
-	std::size_t getStringFromFileOffset(std::ifstream &ifFile, std::string &result, std::size_t fileOffset, std::size_t maxLength/* = 0*/)
+	/**
+	 * @param ifFile
+	 * @param result
+	 * @param fileOffset
+	 * @param maxLength  Maximum length of the string to get.
+	 * @param isPrintable If @c true and a non-printable characters is read,
+	 *                    set @p result to an empty string and return 0.
+	 * @param isNotTooLong If @c true and @p maxLength is reached, set @p result
+	 *                     to an empty string and return 0.
+	 * @return Length of the @p result string.
+	 */
+	std::size_t getStringFromFileOffset(
+			std::ifstream &ifFile,
+			std::string &result,
+			std::size_t fileOffset,
+			std::size_t maxLength/* = 0*/,
+			bool isPrintable/* = false*/,
+			bool isNotTooLong/* = false*/)
 	{
 		result.clear();
 		ifFile.clear();
@@ -185,9 +202,25 @@ namespace PeLib
 		{
 			ifFile.read(namebuffer, 1);
 			if (!ifFile || !namebuffer[0]) break;
+			if (isPrintable && !isprint(namebuffer[0]))
+			{
+				result.clear();
+				return 0;
+			}
 			result += namebuffer;
 			++size;
-			if (maxLength && size == maxLength) break;
+			if (maxLength && size == maxLength)
+			{
+				if (isNotTooLong)
+				{
+					result.clear();
+					return 0;
+				}
+				else
+				{
+					break;
+				}
+			}
 		} while (true);
 
 		return size;
