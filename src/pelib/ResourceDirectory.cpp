@@ -302,17 +302,25 @@ namespace PeLib
 
 	/**
 	* Reads the next resource leaf from the input file.
-	* @param ifFile An input file.
+	* @param inStream An input stream.
 	* @param uiRsrcOffset Offset of resource directory in the file.
 	* @param uiOffset Offset of the resource leaf that's to be read.
 	* @param uiRva RVA of the beginning of the resource directory.
 	* @param uiFileSize Size of the input file.
 	* @param resDir Resource directory.
 	**/
-	int ResourceLeaf::read(std::ifstream& ifFile, unsigned int uiRsrcOffset, unsigned int uiOffset, unsigned int uiRva, unsigned int uiFileSize, ResourceDirectory* resDir)
+	int ResourceLeaf::read(
+			std::istream& inStream,
+			unsigned int uiRsrcOffset,
+			unsigned int uiOffset,
+			unsigned int uiRva,
+			unsigned int uiFileSize,
+			ResourceDirectory* resDir)
 	{
+		IStreamWrapper inStream_w(inStream);
+
 		// Invalid leaf.
-		if (uiRsrcOffset + uiOffset + PELIB_IMAGE_RESOURCE_DATA_ENTRY::size() > fileSize(ifFile))
+		if (uiRsrcOffset + uiOffset + PELIB_IMAGE_RESOURCE_DATA_ENTRY::size() > fileSize(inStream_w))
 		{
 			return ERROR_INVALID_FILE;
 		}
@@ -320,8 +328,8 @@ namespace PeLib
 		uiElementRva = uiOffset + uiRva;
 
 		std::vector<unsigned char> vResourceDataEntry(PELIB_IMAGE_RESOURCE_DATA_ENTRY::size());
-		ifFile.seekg(uiRsrcOffset + uiOffset, std::ios_base::beg);
-		ifFile.read(reinterpret_cast<char*>(vResourceDataEntry.data()), PELIB_IMAGE_RESOURCE_DATA_ENTRY::size());
+		inStream_w.seekg(uiRsrcOffset + uiOffset, std::ios_base::beg);
+		inStream_w.read(reinterpret_cast<char*>(vResourceDataEntry.data()), PELIB_IMAGE_RESOURCE_DATA_ENTRY::size());
 
 		InputBuffer inpBuffer(vResourceDataEntry);
 
@@ -353,8 +361,8 @@ namespace PeLib
 
 		m_data.resize(uiEntrySize);
 
-		ifFile.seekg(uiRsrcOffset + (entry.OffsetToData - uiRva), std::ios_base::beg);
-		ifFile.read(reinterpret_cast<char*>(m_data.data()), uiEntrySize);
+		inStream_w.seekg(uiRsrcOffset + (entry.OffsetToData - uiRva), std::ios_base::beg);
+		inStream_w.read(reinterpret_cast<char*>(m_data.data()), uiEntrySize);
 
 		if (uiEntrySize > 0)
 		{
@@ -638,17 +646,25 @@ namespace PeLib
 
 	/**
 	* Reads the next resource node from the input file.
-	* @param ifFile An input file.
+	* @param inStream An input stream.
 	* @param uiRsrcOffset Offset of resource directory in the file.
 	* @param uiOffset Offset of the resource node that's to be read.
 	* @param uiRva RVA of the beginning of the resource directory.
 	* @param uiFileSize Size of the input file.
 	* @param resDir Resource directory.
 	**/
-	int ResourceNode::read(std::ifstream& ifFile, unsigned int uiRsrcOffset, unsigned int uiOffset, unsigned int uiRva, unsigned int uiFileSize, ResourceDirectory* resDir)
+	int ResourceNode::read(
+			std::istream& inStream,
+			unsigned int uiRsrcOffset,
+			unsigned int uiOffset,
+			unsigned int uiRva,
+			unsigned int uiFileSize,
+			ResourceDirectory* resDir)
 	{
+		IStreamWrapper inStream_w(inStream);
+
 		// Not enough space to be a valid node.
-		if (!resDir || uiRsrcOffset + uiOffset + PELIB_IMAGE_RESOURCE_DIRECTORY::size() > fileSize(ifFile))
+		if (!resDir || uiRsrcOffset + uiOffset + PELIB_IMAGE_RESOURCE_DIRECTORY::size() > fileSize(inStream_w))
 		{
 			return ERROR_INVALID_FILE;
 		}
@@ -656,8 +672,8 @@ namespace PeLib
 		uiElementRva = uiOffset + uiRva;
 
 		std::vector<unsigned char> vResourceDirectory(PELIB_IMAGE_RESOURCE_DIRECTORY::size());
-		ifFile.seekg(uiRsrcOffset + uiOffset, std::ios_base::beg);
-		ifFile.read(reinterpret_cast<char*>(vResourceDirectory.data()), PELIB_IMAGE_RESOURCE_DIRECTORY::size());
+		inStream_w.seekg(uiRsrcOffset + uiOffset, std::ios_base::beg);
+		inStream_w.read(reinterpret_cast<char*>(vResourceDirectory.data()), PELIB_IMAGE_RESOURCE_DIRECTORY::size());
 
 		InputBuffer inpBuffer(vResourceDirectory);
 
@@ -673,13 +689,13 @@ namespace PeLib
 		resDir->addOccupiedAddressRange(uiElementRva, uiElementRva + PELIB_IMAGE_RESOURCE_DIRECTORY::size() - 1);
 
 		// Not enough space to be a valid node.
-		if (uiRsrcOffset + uiOffset + PELIB_IMAGE_RESOURCE_DIRECTORY::size() + uiNumberOfEntries * PELIB_IMAGE_RESOURCE_DIRECTORY_ENTRY::size() > fileSize(ifFile))
+		if (uiRsrcOffset + uiOffset + PELIB_IMAGE_RESOURCE_DIRECTORY::size() + uiNumberOfEntries * PELIB_IMAGE_RESOURCE_DIRECTORY_ENTRY::size() > fileSize(inStream_w))
 		{
 			return ERROR_INVALID_FILE;
 		}
 
 		std::vector<unsigned char> vResourceChildren(uiNumberOfEntries * PELIB_IMAGE_RESOURCE_DIRECTORY_ENTRY::size());
-		ifFile.read(reinterpret_cast<char*>(vResourceChildren.data()), uiNumberOfEntries * PELIB_IMAGE_RESOURCE_DIRECTORY_ENTRY::size());
+		inStream_w.read(reinterpret_cast<char*>(vResourceChildren.data()), uiNumberOfEntries * PELIB_IMAGE_RESOURCE_DIRECTORY_ENTRY::size());
 		InputBuffer childInpBuffer(vResourceChildren);
 
 		resDir->insertNodeOffset(uiOffset);
@@ -697,26 +713,26 @@ namespace PeLib
 			childInpBuffer >> rc.entry.irde.Name;
 			childInpBuffer >> rc.entry.irde.OffsetToData;
 
-			unsigned int lastPos = ifFile.tellg();
+			unsigned int lastPos = inStream_w.tellg();
 
 			if (rc.entry.irde.Name & PELIB_IMAGE_RESOURCE_NAME_IS_STRING)
 			{
 				// Enough space to read string length?
-				if ((rc.entry.irde.Name & ~PELIB_IMAGE_RESOURCE_NAME_IS_STRING) + 2 < fileSize(ifFile))
+				if ((rc.entry.irde.Name & ~PELIB_IMAGE_RESOURCE_NAME_IS_STRING) + 2 < fileSize(inStream_w))
 				{
 					unsigned int uiNameOffset = rc.entry.irde.Name & ~PELIB_IMAGE_RESOURCE_NAME_IS_STRING;
-					if (uiRsrcOffset + uiNameOffset + sizeof(word) > fileSize(ifFile))
+					if (uiRsrcOffset + uiNameOffset + sizeof(word) > fileSize(inStream_w))
 					{
 						return ERROR_INVALID_FILE;
 					}
 
-					ifFile.seekg(uiRsrcOffset + uiNameOffset, std::ios_base::beg);
+					inStream_w.seekg(uiRsrcOffset + uiNameOffset, std::ios_base::beg);
 
 					word len;
-					ifFile.read(reinterpret_cast<char*>(&len), sizeof(word));
+					inStream_w.read(reinterpret_cast<char*>(&len), sizeof(word));
 
 					// Enough space to read string?
-					if (uiRsrcOffset + uiNameOffset + 2 * len > fileSize(ifFile))
+					if (uiRsrcOffset + uiNameOffset + 2 * len > fileSize(inStream_w))
 					{
 						return ERROR_INVALID_FILE;
 					}
@@ -726,12 +742,12 @@ namespace PeLib
 					word c;
 					for (word ii=0; ii<len; ++ii)
 					{
-						ifFile.read(reinterpret_cast<char*>(&c), sizeof(word));
+						inStream_w.read(reinterpret_cast<char*>(&c), sizeof(word));
 						rc.entry.wstrName += c;
 					}
 				}
 
-				ifFile.seekg(lastPos, std::ios_base::beg);
+				inStream_w.seekg(lastPos, std::ios_base::beg);
 			}
 
 			const auto value = (rc.entry.irde.OffsetToData & PELIB_IMAGE_RESOURCE_DATA_IS_DIRECTORY) ?
@@ -751,13 +767,13 @@ namespace PeLib
 				rc.child = new ResourceLeaf;
 			}
 
-			if (rc.child->read(ifFile, uiRsrcOffset, value, uiRva, uiFileSize, resDir) != ERROR_NONE)
+			if (rc.child->read(inStream_w, uiRsrcOffset, value, uiRva, uiFileSize, resDir) != ERROR_NONE)
 			{
 				return ERROR_INVALID_FILE;
 			}
 
 			children.push_back(rc);
-			ifFile.seekg(lastPos, std::ios_base::beg);
+			inStream_w.seekg(lastPos, std::ios_base::beg);
 		}
 
 		return ERROR_NONE;

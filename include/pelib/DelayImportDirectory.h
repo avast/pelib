@@ -72,16 +72,17 @@ namespace PeLib
 				return valueToConvert;
 			}
 
-			int read(const std::string& strFilename, const PeHeaderT<bits>& peHeader)
+			int read(std::istream& inStream, const PeHeaderT<bits>& peHeader)
 			{
 				init();
-				std::ifstream ifFile(strFilename, std::ios::binary);
-				if (!ifFile)
+
+				IStreamWrapper inStream_w(inStream);
+				if (!inStream_w)
 				{
 					return ERROR_OPENING_FILE;
 				}
 
-				std::uint64_t ulFileSize = fileSize(ifFile);
+				std::uint64_t ulFileSize = fileSize(inStream_w);
 				std::uint64_t uiOffset = peHeader.rvaToOffset(peHeader.getIddDelayImportRva());
 				if (uiOffset >= ulFileSize)
 				{
@@ -98,9 +99,9 @@ namespace PeLib
 					InputBuffer inputbuffer(dump);
 
 					// Read the n-th import sdirectory entry
-					if (!ifFile.seekg(uiOffset + i, std::ios::beg))
+					if (!inStream_w.seekg(uiOffset + i, std::ios::beg))
 						break;
-					if (!ifFile.read(reinterpret_cast<char*>(dump.data()), PELIB_IMAGE_SIZEOF_DELAY_IMPORT_DIRECTORY_RECORD))
+					if (!inStream_w.read(reinterpret_cast<char*>(dump.data()), PELIB_IMAGE_SIZEOF_DELAY_IMPORT_DIRECTORY_RECORD))
 						break;
 
 					rec.init();
@@ -133,15 +134,15 @@ namespace PeLib
 					rec.DelayImportNameTableOffset = peHeader.rvaToOffset(rec.DelayImportNameTableRva);
 
 					// Get name of library
-					getStringFromFileOffset(ifFile, rec.Name, (std::size_t)peHeader.rvaToOffset(rec.NameRva), IMPORT_LIBRARY_MAX_LENGTH);
+					getStringFromFileOffset(inStream_w, rec.Name, (std::size_t)peHeader.rvaToOffset(rec.NameRva), IMPORT_LIBRARY_MAX_LENGTH);
 
 					//
 					//  LOADING NAME ADDRESSES/NAME ORDINALS
 					//
 
 					// Address table is not guaranteed to be null-terminated and therefore we need to first read name table.
-					ifFile.seekg(rec.DelayImportNameTableOffset, std::ios::beg);
-					if(!ifFile)
+					inStream_w.seekg(rec.DelayImportNameTableOffset, std::ios::beg);
+					if(!inStream_w)
 					{
 						return ERROR_INVALID_FILE;
 					}
@@ -154,8 +155,8 @@ namespace PeLib
 						std::vector<byte> vBuffer(sizeof(nameAddr.Value));
 
 						// Read the value from the file
-						ifFile.read(reinterpret_cast<char*>(vBuffer.data()), sizeof(nameAddr.Value));
-						if (!ifFile || ifFile.gcount() < sizeof(nameAddr.Value))
+						inStream_w.read(reinterpret_cast<char*>(vBuffer.data()), sizeof(nameAddr.Value));
+						if (!inStream_w || inStream_w.gcount() < sizeof(nameAddr.Value))
 							break;
 
 						InputBuffer inb(vBuffer);
@@ -172,8 +173,8 @@ namespace PeLib
 					//
 
 					// Move to the offset of function addresses
-					ifFile.seekg(rec.DelayImportAddressTableOffset, std::ios::beg);
-					if (!ifFile)
+					inStream_w.seekg(rec.DelayImportAddressTableOffset, std::ios::beg);
+					if (!inStream_w)
 					{
 						return ERROR_INVALID_FILE;
 					}
@@ -186,8 +187,8 @@ namespace PeLib
 						std::vector<byte> vBuffer(sizeof(funcAddr.Value));
 
 						// Read the value from the file
-						ifFile.read(reinterpret_cast<char*>(vBuffer.data()), sizeof(funcAddr.Value));
-						if (!ifFile || ifFile.gcount() < sizeof(funcAddr.Value))
+						inStream_w.read(reinterpret_cast<char*>(vBuffer.data()), sizeof(funcAddr.Value));
+						if (!inStream_w || inStream_w.gcount() < sizeof(funcAddr.Value))
 							break;
 
 						InputBuffer inb(vBuffer);
@@ -217,13 +218,13 @@ namespace PeLib
 							nameAddr.Value = normalizeDelayImportValue(rec, peHeader, nameAddr.Value);
 
 							// Read the function hint
-							ifFile.seekg(peHeader.rvaToOffset(nameAddr.Value), std::ios::beg);
-							ifFile.read(reinterpret_cast<char*>(&function.hint), sizeof(function.hint));
-							if (!ifFile || ifFile.gcount() < sizeof(function.hint))
+							inStream_w.seekg(peHeader.rvaToOffset(nameAddr.Value), std::ios::beg);
+							inStream_w.read(reinterpret_cast<char*>(&function.hint), sizeof(function.hint));
+							if (!inStream_w || inStream_w.gcount() < sizeof(function.hint))
 								break;
 
 							// Read the function name
-							getStringFromFileOffset(ifFile, function.fname, ifFile.tellg(), IMPORT_SYMBOL_MAX_LENGTH);
+							getStringFromFileOffset(inStream_w, function.fname, inStream_w.tellg(), IMPORT_SYMBOL_MAX_LENGTH);
 						}
 						else
 						{

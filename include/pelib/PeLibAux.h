@@ -1208,12 +1208,12 @@ namespace PeLib
 	std::uint32_t AlignToSize(std::uint32_t ByteSize, std::uint32_t AlignSize);
 
 	std::uint64_t fileSize(const std::string& filename);
-	std::uint64_t fileSize(std::ifstream& file);
+	std::uint64_t fileSize(std::istream& stream);
 	std::uint64_t fileSize(std::ofstream& file);
 	std::uint64_t fileSize(std::fstream& file);
 	unsigned int alignOffset(unsigned int uiOffset, unsigned int uiAlignment);
 	std::size_t getStringFromFileOffset(
-			std::ifstream &ifFile,
+			std::istream &stream,
 			std::string &result,
 			std::size_t fileOffset,
 			std::size_t maxLength = 0,
@@ -1224,9 +1224,11 @@ namespace PeLib
 
 	/// Determines if a file is a 32bit or 64bit PE file.
 	unsigned int getFileType(const std::string strFilename);
+	unsigned int getFileType(std::istream& stream);
 
 	/// Opens a PE file.
 	PeFile* openPeFile(const std::string& strFilename);
+	PeFile* openPeFile(std::istream& stream);
 
   /*  enum MzHeader_Field {e_magic, e_cblp, e_cp, e_crlc, e_cparhdr, e_minalloc, e_maxalloc,
 						e_ss, e_sp, e_csum, e_ip, e_cs, e_lfarlc, e_ovno, e_res, e_oemid,
@@ -1404,5 +1406,77 @@ namespace PeLib
 		static inline unsigned int size() { return 8; }
 	};
 }
+
+class IStreamWrapper
+{
+	public:
+		IStreamWrapper(std::istream& stream) :
+				_stream(stream)
+		{
+			_pos = _stream.tellg();
+			_state = _stream.rdstate();
+			_stream.clear();
+		}
+
+		~IStreamWrapper()
+		{
+			_stream.setstate(_state);
+			_stream.seekg(_pos, std::ios::beg);
+		}
+
+		operator std::istream&() const
+		{
+			return _stream;
+		}
+		std::istream& getIstream()
+		{
+			return _stream;
+		}
+
+		// Needed wrapped methods.
+		//
+		explicit operator bool() const
+		{
+			return _stream.operator bool();
+		}
+
+		IStreamWrapper& seekg(std::streampos pos)
+		{
+			_stream.seekg(pos);
+			return *this;
+		}
+
+		IStreamWrapper& seekg(std::streamoff off, std::ios_base::seekdir way)
+		{
+			_stream.seekg(off, way);
+			return *this;
+		}
+
+		std::streampos tellg()
+		{
+			return _stream.tellg();
+		}
+
+		IStreamWrapper& read(char* s, std::streamsize n)
+		{
+			_stream.read(s, n);
+			return *this;
+		}
+
+		std::streamsize gcount() const
+		{
+			return _stream.gcount();
+		}
+
+		void clear(std::ios_base::iostate state = std::ios_base::goodbit)
+		{
+			return _stream.clear(state);
+		}
+
+	private:
+		std::istream& _stream;
+		std::streampos _pos;
+		std::ios::iostate _state;
+};
 
 #endif

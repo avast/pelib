@@ -72,10 +72,14 @@ namespace PeLib
 		numberOfStoredSymbols = symbolTable.size();
 	}
 
-	int CoffSymbolTable::read(const std::string& strFilename, unsigned int uiOffset, unsigned int uiSize)
+	int CoffSymbolTable::read(
+			std::istream& inStream,
+			unsigned int uiOffset,
+			unsigned int uiSize)
 	{
-		std::ifstream ifFile(strFilename, std::ios::binary);
-		if (!ifFile)
+		IStreamWrapper inStream_w(inStream);
+
+		if (!inStream_w)
 		{
 			return ERROR_OPENING_FILE;
 		}
@@ -86,32 +90,32 @@ namespace PeLib
 			return ERROR_INVALID_FILE;
 		}
 
-		std::uint64_t ulFileSize = fileSize(ifFile);
+		std::uint64_t ulFileSize = fileSize(inStream_w);
 		std::uint64_t stringTableOffset = uiOffset + uiSize;
 		if (uiOffset >= ulFileSize || stringTableOffset >= ulFileSize)
 		{
 			return ERROR_INVALID_FILE;
 		}
 
-		ifFile.seekg(uiOffset, std::ios::beg);
+		inStream_w.seekg(uiOffset, std::ios::beg);
 		symbolTableDump.resize(uiSize);
-		ifFile.read(reinterpret_cast<char*>(symbolTableDump.data()), uiSize);
+		inStream_w.read(reinterpret_cast<char*>(symbolTableDump.data()), uiSize);
 		InputBuffer ibBuffer(symbolTableDump);
 
 		// read size of string table
 		if (ulFileSize >= stringTableOffset + 4)
 		{
 			stringTable.resize(4);
-			ifFile.read(reinterpret_cast<char*>(stringTable.data()), 4);
+			inStream_w.read(reinterpret_cast<char*>(stringTable.data()), 4);
 			InputBuffer strBuf(stringTable);
 			strBuf >> stringTableSize;
 		}
 
-		if (ifFile.gcount() < 4)
+		if (inStream_w.gcount() < 4)
 		{
-			stringTableSize = (std::size_t)ifFile.gcount();
+			stringTableSize = (std::size_t)inStream_w.gcount();
 		}
-		else if (ifFile.gcount() == 4 && stringTableSize < 4)
+		else if (inStream_w.gcount() == 4 && stringTableSize < 4)
 		{
 			stringTableSize = 4;
 		}
@@ -125,7 +129,7 @@ namespace PeLib
 		if (stringTableSize > 4)
 		{
 			stringTable.resize(stringTableSize);
-			ifFile.read(reinterpret_cast<char*>(stringTable.data() + 4), stringTableSize - 4);
+			inStream_w.read(reinterpret_cast<char*>(stringTable.data() + 4), stringTableSize - 4);
 		}
 
 		read(ibBuffer, uiSize);

@@ -31,7 +31,7 @@ namespace PeLib
 
 		public:
 		  /// Reads a file's TLS directory.
-		  int read(const std::string& strFilename, const PeHeaderT<bits> &peHeader); // EXPORT
+		  int read(std::istream& inStream, const PeHeaderT<bits> &peHeader); // EXPORT
 		  int read(unsigned char* buffer, unsigned int buffersize); // EXPORT
 		  /// Rebuilds the TLS directory.
 		  void rebuild(std::vector<byte>& vBuffer) const; // EXPORT
@@ -99,19 +99,20 @@ namespace PeLib
 
 	/**
 	* Reads a file's TLS directory.
-	* @param strFilename Name of the file.
+	* @param inStream Input stream.
 	* @param peHeader A valid PE header.
 	**/
 	template<int bits>
-	int TlsDirectory<bits>::read(const std::string& strFilename, const PeHeaderT<bits> &peHeader)
+	int TlsDirectory<bits>::read(std::istream& inStream, const PeHeaderT<bits> &peHeader)
 	{
-		std::ifstream ifFile(strFilename.c_str(), std::ios::binary);
-		std::uint64_t ulFileSize = fileSize(ifFile);
+		IStreamWrapper inStream_w(inStream);
 
-		if (!ifFile)
+		if (!inStream_w)
 		{
 			return ERROR_OPENING_FILE;
 		}
+
+		std::uint64_t ulFileSize = fileSize(inStream_w);
 
 		std::uint64_t uiOffset = peHeader.rvaToOffset(peHeader.getIddTlsRva());
 		unsigned int uiSize = peHeader.getIddTlsSize();
@@ -121,10 +122,10 @@ namespace PeLib
 			return ERROR_INVALID_FILE;
 		}
 
-		ifFile.seekg(uiOffset, std::ios::beg);
+		inStream_w.seekg(uiOffset, std::ios::beg);
 
 		std::vector<byte> vTlsDirectory(uiSize);
-		ifFile.read(reinterpret_cast<char*>(vTlsDirectory.data()), uiSize);
+		inStream_w.read(reinterpret_cast<char*>(vTlsDirectory.data()), uiSize);
 
 		InputBuffer ibBuffer{vTlsDirectory};
 		read(ibBuffer);

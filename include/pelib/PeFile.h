@@ -150,6 +150,9 @@ namespace PeLib
 		typedef typename PeFile_Traits<bits>::PeHeader32_64 PeHeader32_64;
 
 		private:
+	      std::ifstream m_ifStream;
+	      std::istream& m_iStream;
+
 		  PeHeader32_64 m_peh; ///< PE header of the current file.
 		  ExportDirectoryT<bits> m_expdir; ///< Export directory of the current file.
 		  ImportDirectory<bits> m_impdir; ///< Import directory of the current file.
@@ -170,6 +173,7 @@ namespace PeLib
 
 		  /// Initializes a PeFile with a filename
 		  explicit PeFileT(const std::string& strFilename);
+		  PeFileT(std::istream& stream);
 
 		  /// Returns the name of the current file.
 		  std::string getFileName() const;
@@ -281,6 +285,7 @@ namespace PeLib
 
 		  /// Initializes a PeFile with a filename
 		  explicit PeFile32(const std::string& strFlename);
+		  PeFile32(std::istream& stream);
 		  virtual void visit(PeFileVisitor &v) { v.callback( *this ); }
 	};
 
@@ -295,6 +300,7 @@ namespace PeLib
 
 		  /// Initializes a PeFile with a filename
 		  explicit PeFile64(const std::string& strFlename);
+		  PeFile64(std::istream& stream);
 		  virtual void visit(PeFileVisitor &v) { v.callback( *this ); }
 	};
 
@@ -305,20 +311,32 @@ namespace PeLib
 	* @param strFilename Name of the current file.
 	**/
 	template<int bits>
-	PeFileT<bits>::PeFileT(const std::string& strFilename)
+	PeFileT<bits>::PeFileT(const std::string& strFilename) :
+			m_iStream(m_ifStream)
 	{
- 		m_filename = strFilename;
+		m_filename = strFilename;
+		m_ifStream.open(m_filename, std::ifstream::binary);
+	}
+
+	/**
+	* @param stream Input stream.
+	**/
+	template<int bits>
+	PeFileT<bits>::PeFileT(std::istream& stream) :
+			m_iStream(stream)
+	{
  	}
 
 	template<int bits>
-	PeFileT<bits>::PeFileT()
+	PeFileT<bits>::PeFileT() :
+			m_iStream(m_ifStream)
 	{
 	}
 
 	template<int bits>
 	int PeFileT<bits>::readPeHeader()
 	{
-		return peHeader().read(getFileName(), mzHeader().getAddressOfPeHeader(), mzHeader());
+		return peHeader().read(m_iStream, mzHeader().getAddressOfPeHeader(), mzHeader());
 	}
 
 	/**
@@ -517,26 +535,38 @@ namespace PeLib
 	void PeFileT<bits>::setFileName(std::string strFilename)
 	{
 		m_filename = strFilename;
+		if (m_ifStream.is_open())
+		{
+			m_ifStream.close();
+		}
+		m_ifStream.open(m_filename, std::ifstream::binary);
 	}
 
 	template<int bits>
 	int PeFileT<bits>::readMzHeader()
 	{
-		return mzHeader().read(getFileName());
+		return mzHeader().read(m_iStream);
 	}
 
 	template<int bits>
-	int PeFileT<bits>::readRichHeader(std::size_t offset, std::size_t size, bool ignoreInvalidKey)
+	int PeFileT<bits>::readRichHeader(
+			std::size_t offset,
+			std::size_t size,
+			bool ignoreInvalidKey)
 	{
-		return richHeader().read(getFileName(), offset, size, ignoreInvalidKey);
+		return richHeader().read(m_iStream, offset, size, ignoreInvalidKey);
 	}
 
 	template<int bits>
 	int PeFileT<bits>::readCoffSymbolTable()
 	{
-		if (peHeader().getPointerToSymbolTable() && peHeader().getNumberOfSymbols())
+		if (peHeader().getPointerToSymbolTable()
+				&& peHeader().getNumberOfSymbols())
 		{
-			return coffSymTab().read(getFileName(), static_cast<unsigned int>(peHeader().getPointerToSymbolTable()), peHeader().getNumberOfSymbols() * PELIB_IMAGE_SIZEOF_COFF_SYMBOL);
+			return coffSymTab().read(
+					m_iStream,
+					static_cast<unsigned int>(peHeader().getPointerToSymbolTable()),
+					peHeader().getNumberOfSymbols() * PELIB_IMAGE_SIZEOF_COFF_SYMBOL);
 		}
 		return ERROR_COFF_SYMBOL_TABLE_DOES_NOT_EXIST;
 	}
@@ -547,7 +577,7 @@ namespace PeLib
 		if (peHeader().calcNumberOfRvaAndSizes() >= 1
 			&& peHeader().getIddExportRva())
 		{
-			return expDir().read(getFileName(), peHeader());
+			return expDir().read(m_iStream, peHeader());
 		}
 		return ERROR_DIRECTORY_DOES_NOT_EXIST;
 	}
@@ -558,7 +588,7 @@ namespace PeLib
 		if (peHeader().calcNumberOfRvaAndSizes() >= 2
 			&& peHeader().getIddImportRva())
 		{
-			return impDir().read(getFileName(), peHeader());
+			return impDir().read(m_iStream, peHeader());
 		}
 		return ERROR_DIRECTORY_DOES_NOT_EXIST;
 	}
@@ -569,7 +599,7 @@ namespace PeLib
 		if (peHeader().calcNumberOfRvaAndSizes() >= 3
 			&& peHeader().getIddResourceRva())
 		{
-			return resDir().read(getFileName(), peHeader());
+			return resDir().read(m_iStream, peHeader());
 		}
 		return ERROR_DIRECTORY_DOES_NOT_EXIST;
 	}
@@ -578,9 +608,13 @@ namespace PeLib
 	int PeFileT<bits>::readSecurityDirectory()
 	{
 		if (peHeader().calcNumberOfRvaAndSizes() >= 5
-			&& peHeader().getIddSecurityRva() && peHeader().getIddSecuritySize())
+			&& peHeader().getIddSecurityRva()
+			&& peHeader().getIddSecuritySize())
 		{
-			return securityDir().read(getFileName(), peHeader().getIddSecurityRva(), peHeader().getIddSecuritySize());
+			return securityDir().read(
+					m_iStream,
+					peHeader().getIddSecurityRva(),
+					peHeader().getIddSecuritySize());
 		}
 		return ERROR_DIRECTORY_DOES_NOT_EXIST;
 	}
@@ -591,7 +625,7 @@ namespace PeLib
 		if (peHeader().calcNumberOfRvaAndSizes() >= 6
 			&& peHeader().getIddBaseRelocRva() && peHeader().getIddBaseRelocSize())
 		{
-			return relocDir().read(getFileName(), peHeader());
+			return relocDir().read(m_iStream, peHeader());
 		}
 		return ERROR_DIRECTORY_DOES_NOT_EXIST;
 	}
@@ -602,7 +636,7 @@ namespace PeLib
 		if (peHeader().calcNumberOfRvaAndSizes() >= 7
 			&& peHeader().getIddDebugRva() && peHeader().getIddDebugSize())
 		{
-			return debugDir().read(getFileName(), peHeader());
+			return debugDir().read(m_iStream, peHeader());
 		}
 		return ERROR_DIRECTORY_DOES_NOT_EXIST;
 	}
@@ -613,7 +647,7 @@ namespace PeLib
 		if (peHeader().calcNumberOfRvaAndSizes() >= 10
 			&& peHeader().getIddTlsRva() && peHeader().getIddTlsSize())
 		{
-			return tlsDir().read(getFileName(), peHeader());
+			return tlsDir().read(m_iStream, peHeader());
 		}
 		return ERROR_DIRECTORY_DOES_NOT_EXIST;
 	}
@@ -624,7 +658,7 @@ namespace PeLib
 		if (peHeader().calcNumberOfRvaAndSizes() >= 12
 			&& peHeader().getIddBoundImportRva() && peHeader().getIddBoundImportSize())
 		{
-			return boundImpDir().read(getFileName(), peHeader());
+			return boundImpDir().read(m_iStream, peHeader());
 		}
 		return ERROR_DIRECTORY_DOES_NOT_EXIST;
 	}
@@ -635,7 +669,7 @@ namespace PeLib
 		if (peHeader().calcNumberOfRvaAndSizes() >= 13
 			&& peHeader().getIddIatRva() && peHeader().getIddIatSize())
 		{
-			return iatDir().read(getFileName(), peHeader());
+			return iatDir().read(m_iStream, peHeader());
 		}
 		return ERROR_DIRECTORY_DOES_NOT_EXIST;
 	}
@@ -646,7 +680,7 @@ namespace PeLib
 		// Note: Delay imports can have arbitrary size and Windows loader will still load them
 		if (peHeader().calcNumberOfRvaAndSizes() >= 14 && peHeader().getIddDelayImportRva() /* && peHeader().getIddDelayImportSize() */)
 		{
-			return delayImports().read(getFileName(), peHeader());
+			return delayImports().read(m_iStream, peHeader());
 		}
 		return ERROR_DIRECTORY_DOES_NOT_EXIST;
 	}
@@ -657,7 +691,7 @@ namespace PeLib
 		if (peHeader().calcNumberOfRvaAndSizes() >= 15
 			&& peHeader().getIddComHeaderRva() && peHeader().getIddComHeaderSize())
 		{
-			return comDir().read(getFileName(), peHeader());
+			return comDir().read(m_iStream, peHeader());
 		}
 		return ERROR_DIRECTORY_DOES_NOT_EXIST;
 	}

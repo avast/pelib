@@ -127,12 +127,12 @@ namespace PeLib
 		return file.tellg();
 	}
 
-	std::uint64_t fileSize(std::ifstream& file)
+	std::uint64_t fileSize(std::istream& stream)
 	{
-		std::streamoff oldpos = file.tellg();
-		file.seekg(0, std::ios::end);
-		std::streamoff filesize = file.tellg();
-		file.seekg(oldpos, std::ios::beg);
+		std::streamoff oldpos = stream.tellg();
+		stream.seekg(0, std::ios::end);
+		std::streamoff filesize = stream.tellg();
+		stream.seekg(oldpos, std::ios::beg);
 		return filesize;
 	}
 
@@ -169,7 +169,7 @@ namespace PeLib
 	}
 
 	/**
-	 * @param ifFile
+	 * @param stream
 	 * @param result
 	 * @param fileOffset
 	 * @param maxLength  Maximum length of the string to get.
@@ -180,17 +180,19 @@ namespace PeLib
 	 * @return Length of the @p result string.
 	 */
 	std::size_t getStringFromFileOffset(
-			std::ifstream &ifFile,
+			std::istream &stream,
 			std::string &result,
 			std::size_t fileOffset,
 			std::size_t maxLength/* = 0*/,
 			bool isPrintable/* = false*/,
 			bool isNotTooLong/* = false*/)
 	{
+		IStreamWrapper inStream_w(stream);
+
 		result.clear();
-		ifFile.clear();
-		ifFile.seekg(fileOffset, std::ios::beg);
-		if (!ifFile)
+		inStream_w.clear();
+		inStream_w.seekg(fileOffset, std::ios::beg);
+		if (!inStream_w)
 		{
 			return 0;
 		}
@@ -200,8 +202,8 @@ namespace PeLib
 
 		do
 		{
-			ifFile.read(namebuffer, 1);
-			if (!ifFile || !namebuffer[0]) break;
+			inStream_w.read(namebuffer, 1);
+			if (!inStream_w || !namebuffer[0]) break;
 			if (isPrintable && !isprint(namebuffer[0]))
 			{
 				result.clear();
@@ -382,14 +384,8 @@ namespace PeLib
 		return isEqualNc(this->funcname, strFunctionName);
 	}
 
-	/**
-	* @param strFilename Name of a file.
-	* @return Either PEFILE32, PEFILE64 or PEFILE_UNKNOWN
-	**/
-	unsigned int getFileType(const std::string strFilename)
+	unsigned int getFileType(PeFile32& pef)
 	{
-		PeFile32 pef(strFilename);
-
 		// Attempt to read the DOS file header.
 		if (pef.readMzHeader() != ERROR_NONE)
 		{
@@ -402,7 +398,8 @@ namespace PeLib
 			return PEFILE_UNKNOWN;
 		}
 
-		// Read PE header. Note that at this point, we read the header as if it was 32-bit PE file
+		// Read PE header. Note that at this point, we read the header as if
+		// it was 32-bit PE file.
 		if (pef.readPeHeader() != ERROR_NONE)
 		{
 			return PEFILE_UNKNOWN;
@@ -412,8 +409,9 @@ namespace PeLib
 		word magic = pef.peHeader().getMagic();
 
 		// jk2012-02-20: make the PEFILE32 be the default return value
-		// std::cout << "machine: " << machine << std::endl << "magic: " << magic << std::endl;
-		if ((machine == PELIB_IMAGE_FILE_MACHINE_AMD64 || machine == PELIB_IMAGE_FILE_MACHINE_IA64) && magic == PELIB_IMAGE_NT_OPTIONAL_HDR64_MAGIC)
+		if ((machine == PELIB_IMAGE_FILE_MACHINE_AMD64
+					|| machine == PELIB_IMAGE_FILE_MACHINE_IA64)
+				&& magic == PELIB_IMAGE_NT_OPTIONAL_HDR64_MAGIC)
 		{
 			return PEFILE64;
 		}
@@ -421,52 +419,26 @@ namespace PeLib
 		{
 			return PEFILE32;
 		}
+	}
 
-		/*
-			word machine, magic;
+	/**
+	* @param strFilename Name of a file.
+	* @return Either PEFILE32, PEFILE64 or PEFILE_UNKNOWN
+	**/
+	unsigned int getFileType(const std::string strFilename)
+	{
+		PeFile32 pef(strFilename);
+		return getFileType(pef);
+	}
 
-			if (pef.readMzHeader() != ERROR_NONE)
-			{
-			  return PEFILE_UNKNOWN;
-			}
-			else if (!pef.mzHeader().isValid())
-			{
-				return PEFILE_UNKNOWN;
-			}
-			else if (pef.readPeHeader() != ERROR_NONE)
-			{
-			  return PEFILE_UNKNOWN;
-			}
-
-			machine = pef.peHeader().getMachine();
-			magic = pef.peHeader().getMagic();
-
-			// jk2012-02-20: make the PEFILE32 be the default return value
-			// std::cout << "machine: " << machine << std::endl << "magic: " << magic << std::endl;
-			if ((machine == PELIB_IMAGE_FILE_MACHINE_AMD64 || machine == PELIB_IMAGE_FILE_MACHINE_IA64) && magic == PELIB_IMAGE_NT_OPTIONAL_HDR64_MAGIC)
-			{
-			  return PEFILE64;
-			}
-			else
-			{
-			  return PEFILE32;
-			}
-		*/
-		/*
-			// jk 2012-02-20: original code
-			if (machine == PELIB_IMAGE_FILE_MACHINE_I386 && magic == PELIB_IMAGE_NT_OPTIONAL_HDR32_MAGIC)
-			{
-			  return PEFILE32;
-			}
-			else if ((machine == PELIB_IMAGE_FILE_MACHINE_AMD64 || machine == PELIB_IMAGE_FILE_MACHINE_IA64) && magic == PELIB_IMAGE_NT_OPTIONAL_HDR64_MAGIC)
-			{
-			  return PEFILE64;
-			}
-			else
-			{
-			  return PEFILE_UNKNOWN;
-			}
-		*/
+	/**
+	* @param stream Input stream.
+	* @return Either PEFILE32, PEFILE64 or PEFILE_UNKNOWN
+	**/
+	unsigned int getFileType(std::istream& stream)
+	{
+		PeFile32 pef(stream);
+		return getFileType(pef);
 	}
 
 	/**
@@ -489,7 +461,25 @@ namespace PeLib
 		}
 		else
 		{
-			return 0;
+			return nullptr;
+		}
+	}
+
+	PeFile* openPeFile(std::istream& stream)
+	{
+		unsigned int type = getFileType(stream);
+
+		if (type == PEFILE32)
+		{
+			return new PeFile32(stream);
+		}
+		else if (type == PEFILE64)
+		{
+			return new PeFile64(stream);
+		}
+		else
+		{
+			return nullptr;
 		}
 	}
 

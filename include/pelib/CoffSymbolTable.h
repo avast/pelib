@@ -32,7 +32,10 @@ namespace PeLib
 			LoaderError loaderError() const;
 			void setLoaderError(LoaderError ldrError);
 
-			int read(const std::string& strFilename, unsigned int uiOffset, unsigned int uiSize);
+			int read(
+					std::istream& inStream,
+					unsigned int uiOffset,
+					unsigned int uiSize);
 			std::size_t getSizeOfStringTable() const;
 			std::size_t getNumberOfStoredSymbols() const;
 			dword getSymbolIndex(std::size_t ulSymbol) const;

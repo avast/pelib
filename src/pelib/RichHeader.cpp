@@ -137,24 +137,29 @@ namespace
 		}
 	}
 
-	int RichHeader::read(const std::string& strFilename, std::size_t uiOffset, std::size_t uiSize, bool ignoreInvalidKey)
+	int RichHeader::read(
+			std::istream& inStream,
+			std::size_t uiOffset,
+			std::size_t uiSize,
+			bool ignoreInvalidKey)
 	{
-		std::ifstream ifFile(strFilename, std::ios::binary);
-		if (!ifFile)
+		IStreamWrapper inStream_w(inStream);
+
+		if (!inStream_w)
 		{
 			return ERROR_OPENING_FILE;
 		}
 
-		const auto ulFileSize = fileSize(ifFile);
+		const auto ulFileSize = fileSize(inStream_w);
 		if (ulFileSize < uiOffset + uiSize)
 		{
 			return ERROR_INVALID_FILE;
 		}
 
-		ifFile.seekg(uiOffset, std::ios::beg);
+		inStream_w.seekg(uiOffset, std::ios::beg);
 		std::vector<unsigned char> tableDump;
 		tableDump.resize(uiSize);
-		ifFile.read(reinterpret_cast<char*>(tableDump.data()), uiSize);
+		inStream_w.read(reinterpret_cast<char*>(tableDump.data()), uiSize);
 		InputBuffer ibBuffer(tableDump);
 		read(ibBuffer, uiSize, ignoreInvalidKey);
 

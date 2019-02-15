@@ -112,11 +112,20 @@ namespace PeLib
 		  unsigned int offsetToVa(VAR4_8 dwOffset) const; // EXPORT
 
 		  /// Reads the PE header of a file.
-		  int read(std::string strFilename, unsigned int uiOffset, const MzHeader &mzHeader); // EXPORT
+		  int read(
+				  std::istream& inStream,
+				  unsigned int uiOffset,
+				  const MzHeader &mzHeader); // EXPORT
 
 		  void readHeader(InputBuffer& ibBuffer, PELIB_IMAGE_NT_HEADERS<x>& header);
-		  void readDataDirectories(const std::string& strFilename, unsigned int uiOffset, PELIB_IMAGE_NT_HEADERS<x>& header);
-		  std::vector<PELIB_IMAGE_SECTION_HEADER> readSections(const std::string& strFilename, unsigned int uiOffset, PELIB_IMAGE_NT_HEADERS<x>& header);
+		  void readDataDirectories(
+				  std::istream& inStream,
+				  unsigned int uiOffset,
+				  PELIB_IMAGE_NT_HEADERS<x>& header);
+		  std::vector<PELIB_IMAGE_SECTION_HEADER> readSections(
+				  std::istream& inStream,
+				  unsigned int uiOffset,
+				  PELIB_IMAGE_NT_HEADERS<x>& header);
 
 		  /// Rebuilds the current PE header.
 		  void rebuild(std::vector<byte>& vBuffer) const; // EXPORT
@@ -955,14 +964,15 @@ namespace PeLib
 	}
 
 	template<int x>
-	void PeHeaderT<x>::readDataDirectories(const std::string& strFilename, unsigned int uiOffset, PELIB_IMAGE_NT_HEADERS<x>& header)
+	void PeHeaderT<x>::readDataDirectories(
+			std::istream& inStream,
+			unsigned int uiOffset,
+			PELIB_IMAGE_NT_HEADERS<x>& header)
 	{
-		std::ifstream file(strFilename, std::ios::binary);
-		if (!file)
-			return;
+		IStreamWrapper inStream_w(inStream);
 
-		std::uint64_t ulFileSize = fileSize(file);
-		file.seekg(uiOffset, std::ios::beg);
+		std::uint64_t ulFileSize = fileSize(inStream_w);
+		inStream_w.seekg(uiOffset, std::ios::beg);
 
 		std::vector<unsigned char> iddBuffer(PELIB_IMAGE_DATA_DIRECTORY::size());
 		PELIB_IMAGE_DATA_DIRECTORY idd;
@@ -991,10 +1001,10 @@ namespace PeLib
 			}
 
 			if (i == PELIB_IMAGE_DIRECTORY_ENTRY_SECURITY)
-				m_secDirFileOffset = (unsigned long)file.tellg();
+				m_secDirFileOffset = (unsigned long)inStream_w.tellg();
 
 			iddBuffer.resize(PELIB_IMAGE_DATA_DIRECTORY::size());
-			file.read(reinterpret_cast<char*>(iddBuffer.data()), iddBuffer.size());
+			inStream_w.read(reinterpret_cast<char*>(iddBuffer.data()), iddBuffer.size());
 
 			InputBuffer ibBuffer(iddBuffer);
 			ibBuffer >> idd.VirtualAddress;
@@ -1008,19 +1018,20 @@ namespace PeLib
 	}
 
 	template<int x>
-	std::vector<PELIB_IMAGE_SECTION_HEADER> PeHeaderT<x>::readSections(const std::string& strFilename, unsigned int uiOffset, PELIB_IMAGE_NT_HEADERS<x>& header)
+	std::vector<PELIB_IMAGE_SECTION_HEADER> PeHeaderT<x>::readSections(
+			std::istream& inStream,
+			unsigned int uiOffset,
+			PELIB_IMAGE_NT_HEADERS<x>& header)
 	{
+		IStreamWrapper inStream_w(inStream);
+
 		const unsigned long long stringTableOffset = header.FileHeader.PointerToSymbolTable + header.FileHeader.NumberOfSymbols * PELIB_IMAGE_SIZEOF_COFF_SYMBOL;
 		std::vector<PELIB_IMAGE_SECTION_HEADER> vIshdCurr;
 		bool bRawDataBeyondEOF = false;
 
-		std::ifstream ifFile(strFilename, std::ios::binary);
-		if (!ifFile)
-			return vIshdCurr;
-
 		std::vector<unsigned char> ishBuffer(PELIB_IMAGE_SECTION_HEADER::size());
 		PELIB_IMAGE_SECTION_HEADER ishCurr;
-		std::uint64_t ulFileSize = fileSize(ifFile);
+		std::uint64_t ulFileSize = fileSize(inStream_w);
 
 		// Check overflow of the section headers
 		std::uint32_t SectionHdrOffset = MzHeader().e_lfanew + sizeof(std::uint32_t) + header.FileHeader.size() + header.FileHeader.SizeOfOptionalHeader;
@@ -1033,9 +1044,9 @@ namespace PeLib
 				break;
 
 			// Clear error bits, because reading from symbol table might have failed.
-			ifFile.clear();
-			ifFile.seekg(uiOffset, std::ios::beg);
-			ifFile.read(reinterpret_cast<char*>(ishBuffer.data()), ishBuffer.size());
+			inStream_w.clear();
+			inStream_w.seekg(uiOffset, std::ios::beg);
+			inStream_w.read(reinterpret_cast<char*>(ishBuffer.data()), ishBuffer.size());
 			InputBuffer ibBuffer(ishBuffer);
 
 			ibBuffer.read(reinterpret_cast<char*>(ishCurr.Name), 8);
@@ -1053,7 +1064,7 @@ namespace PeLib
 				if (stringTableOffset + stringTableIndex <= ulFileSize)
 				{
 					getStringFromFileOffset(
-							ifFile,
+							inStream_w,
 							ishCurr.StringTableName,
 							(std::size_t)(stringTableOffset + stringTableIndex),
 							PELIB_IMAGE_SIZEOF_MAX_NAME,
@@ -1219,19 +1230,23 @@ namespace PeLib
 	* Reads the PE header from a file Note that this function does not verify if a file is actually a MZ file.
 	* For this purpose see #PeLib::PeHeaderT<x>::isValid. The only check this function makes is a check to see if
 	* the file is large enough to be a PE header. If the data is valid doesn't matter.
-	* @param strFilename Name of the file which will be read.
+	* @param inStream Input stream.
 	* @param uiOffset File offset of PE header (see #PeLib::MzHeader::getAddressOfPeHeader).
-	* @param mzHeader Reference to MZ header
+	* @param mzHeader Reference to MZ header.
 	**/
 	template<int x>
-	int PeHeaderT<x>::read(std::string strFilename, unsigned int ntHeaderOffset, const MzHeader &mzHeader)
+	int PeHeaderT<x>::read(
+			std::istream& inStream,
+			unsigned int ntHeaderOffset,
+			const MzHeader &mzHeader)
 	{
+		IStreamWrapper inStream_w(inStream);
+
 		m_mzHeader = mzHeader;
 		m_uiOffset = ntHeaderOffset;
 		PELIB_IMAGE_NT_HEADERS<x> header;
 
-		std::ifstream ifFile(strFilename, std::ios::binary);
-		if (!ifFile)
+		if (!inStream_w)
 		{
 			return ERROR_OPENING_FILE;
 		}
@@ -1239,13 +1254,13 @@ namespace PeLib
 		// Check the position of the NT header for integer overflow
 		if (ntHeaderOffset + header.size() < ntHeaderOffset)
 			setLoaderError(LDR_ERROR_NTHEADER_OFFSET_OVERFLOW);
-		if((std::uint64_t)ntHeaderOffset + header.size() > fileSize(ifFile))
+		if((std::uint64_t)ntHeaderOffset + header.size() > fileSize(inStream_w))
 			setLoaderError(LDR_ERROR_NTHEADER_OUT_OF_FILE);
 
 		std::vector<unsigned char> vBuffer(header.size());
 
-		ifFile.seekg(ntHeaderOffset, std::ios::beg);
-		ifFile.read(reinterpret_cast<char*>(vBuffer.data()), static_cast<std::streamsize>(vBuffer.size()));
+		inStream_w.seekg(ntHeaderOffset, std::ios::beg);
+		inStream_w.read(reinterpret_cast<char*>(vBuffer.data()), static_cast<std::streamsize>(vBuffer.size()));
 
 		InputBuffer ibBuffer(vBuffer);
 
@@ -1324,17 +1339,17 @@ namespace PeLib
 			setLoaderError(LDR_ERROR_IMAGE_BASE_NOT_ALIGNED);
 
 		// header now contains only Signature + File Header + Optional Header
-		readDataDirectories(strFilename, ntHeaderOffset + header.size(), header);
+		readDataDirectories(inStream_w, ntHeaderOffset + header.size(), header);
 
 		// Section headers begin at the offset of the optional header + SizeOfOptionalHeader
 		// We need to do this because section headers may be hidden in optional header
-		m_vIsh = readSections(strFilename,
-			ntHeaderOffset + header.sizeOfSignature() + PELIB_IMAGE_FILE_HEADER::size() + header.FileHeader.SizeOfOptionalHeader,
-				header);
+		auto secHdrOff = ntHeaderOffset
+				+ header.sizeOfSignature()
+				+ PELIB_IMAGE_FILE_HEADER::size()
+				+ header.FileHeader.SizeOfOptionalHeader;
+		m_vIsh = readSections(inStream_w, secHdrOff, header);
 
 		std::swap(m_inthHeader, header);
-
-		ifFile.close();
 
 		return ERROR_NONE;
 	}

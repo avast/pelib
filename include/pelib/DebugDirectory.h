@@ -93,23 +93,24 @@ namespace PeLib
 	{
 		public:
 		  /// Reads the Debug directory from a file.
-		  int read(const std::string& strFilename, const PeHeaderT<bits>& peHeader); // EXPORT
+		  int read(std::istream& inStream, const PeHeaderT<bits>& peHeader);
 	};
 
 	/**
-	* @param strFilename Name of the file which will be read.
+	* @param inStream Input stream.
 	* @param peHeader A valid PE header which is necessary because some RVA calculations need to be done.
 	**/
 	template <int bits>
-	int DebugDirectoryT<bits>::read(const std::string& strFilename, const PeHeaderT<bits>& peHeader)
+	int DebugDirectoryT<bits>::read(std::istream& inStream, const PeHeaderT<bits>& peHeader)
 	{
-		std::ifstream ifFile(strFilename.c_str(), std::ios::binary);
-		std::uint64_t ulFileSize = fileSize(ifFile);
+		IStreamWrapper inStream_w(inStream);
 
-		if (!ifFile)
+		if (!inStream_w)
 		{
 			return ERROR_OPENING_FILE;
 		}
+
+		std::uint64_t ulFileSize = fileSize(inStream_w);
 
 		unsigned int uiRva = peHeader.getIddDebugRva();
 		unsigned int uiOffset = peHeader.rvaToOffset(uiRva);
@@ -120,10 +121,10 @@ namespace PeLib
 			return ERROR_INVALID_FILE;
 		}
 
-		ifFile.seekg(uiOffset, std::ios::beg);
+		inStream_w.seekg(uiOffset, std::ios::beg);
 
 		std::vector<byte> vDebugDirectory(uiSize);
-		ifFile.read(reinterpret_cast<char*>(vDebugDirectory.data()), uiSize);
+		inStream_w.read(reinterpret_cast<char*>(vDebugDirectory.data()), uiSize);
 
 		InputBuffer ibBuffer{vDebugDirectory};
 
@@ -137,10 +138,10 @@ namespace PeLib
 				return ERROR_INVALID_FILE;
 			}
 
-			ifFile.seekg(currDebugInfo[i].idd.PointerToRawData, std::ios::beg);
+			inStream_w.seekg(currDebugInfo[i].idd.PointerToRawData, std::ios::beg);
 			currDebugInfo[i].data.resize(currDebugInfo[i].idd.SizeOfData);
-			ifFile.read(reinterpret_cast<char*>(currDebugInfo[i].data.data()), currDebugInfo[i].idd.SizeOfData);
-			if (!ifFile) return ERROR_INVALID_FILE;
+			inStream_w.read(reinterpret_cast<char*>(currDebugInfo[i].data.data()), currDebugInfo[i].idd.SizeOfData);
+			if (!inStream_w) return ERROR_INVALID_FILE;
 
 			if (currDebugInfo[i].idd.SizeOfData > 0)
 			{

@@ -19,25 +19,28 @@ namespace PeLib
 		return m_certs[index].Certificate;
 	}
 
-	int SecurityDirectory::read(const std::string& strFilename, unsigned int uiOffset, unsigned int uiSize)
+	int SecurityDirectory::read(
+			std::istream& inStream,
+			unsigned int uiOffset,
+			unsigned int uiSize)
 	{
-		std::ifstream ifFile(strFilename.c_str(), std::ios::binary);
+		IStreamWrapper inStream_w(inStream);
 
-		if (!ifFile)
+		if (!inStream_w)
 		{
 			return ERROR_OPENING_FILE;
 		}
 
-		std::uint64_t ulFileSize = fileSize(ifFile);
+		std::uint64_t ulFileSize = fileSize(inStream_w);
 		if (ulFileSize < uiOffset + uiSize)
 		{
 			return ERROR_INVALID_FILE;
 		}
 
-		ifFile.seekg(uiOffset, std::ios::beg);
+		inStream_w.seekg(uiOffset, std::ios::beg);
 
 		std::vector<unsigned char> vCertDirectory(uiSize);
-		ifFile.read(reinterpret_cast<char*>(vCertDirectory.data()), uiSize);
+		inStream_w.read(reinterpret_cast<char*>(vCertDirectory.data()), uiSize);
 
 		InputBuffer inpBuffer(vCertDirectory);
 

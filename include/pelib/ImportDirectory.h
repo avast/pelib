@@ -110,7 +110,7 @@ namespace PeLib
 		  /// Get the number of fucntions which are imported by a specific file.
 		  dword getNumberOfFunctions(dword dwFilenr, currdir cdDir) const; // EXPORT
 		  /// Read a file's import directory.
-		  int read(const std::string& strFilename, const PeHeaderT<bits>& peHeader); // EXPORT
+		  int read(std::istream& inStream, const PeHeaderT<bits>& peHeader); // EXPORT
 		  /// Rebuild the import directory.
 		  void rebuild(std::vector<byte>& vBuffer, dword dwRva, bool fixEntries = true); // EXPORT
 		  /// Remove a file from the import directory.
@@ -465,23 +465,26 @@ namespace PeLib
 	/**
 	* Read an import directory from a file.
 	* \todo Check if streams failed.
-	* @param strFilename Name of the file which will be read.
+	* @param inStream Input stream.
 	* @param peHeader A valid PE header.
 	**/
 	template<int bits>
-	int ImportDirectory<bits>::read(const std::string& strFilename, const PeHeaderT<bits>& peHeader)
+	int ImportDirectory<bits>::read(
+			std::istream& inStream,
+			const PeHeaderT<bits>& peHeader)
 	{
-		std::ifstream ifFile(strFilename.c_str(), std::ios_base::binary);
+		IStreamWrapper inStream_w(inStream);
+
 		VAR4_8 OrdinalMask = ((VAR4_8)1 << (bits - 1));
 		VAR4_8 SizeOfImage = peHeader.getSizeOfImage();
 		dword uiIndex;
 
-		if (!ifFile)
+		if (!inStream_w)
 		{
 			return ERROR_OPENING_FILE;
 		}
 
-		std::uint64_t ulFileSize = fileSize(ifFile);
+		std::uint64_t ulFileSize = fileSize(inStream_w);
 		unsigned int uiOffset = peHeader.rvaToOffset(peHeader.getIddImportRva());
 
 		if (ulFileSize < uiOffset)
@@ -489,7 +492,7 @@ namespace PeLib
 			return ERROR_INVALID_FILE;
 		}
 
-		ifFile.seekg(uiOffset, std::ios_base::beg);
+		inStream_w.seekg(uiOffset, std::ios_base::beg);
 
 		PELIB_IMAGE_IMPORT_DIRECTORY<bits> iidCurr;
 		std::vector<PELIB_IMAGE_IMPORT_DIRECTORY<bits> > vOldIidCurr;
@@ -504,7 +507,7 @@ namespace PeLib
 				break;
 
 			std::vector<unsigned char> vImportDescriptor(PELIB_IMAGE_IMPORT_DESCRIPTOR::size());
-			ifFile.read(reinterpret_cast<char*>(vImportDescriptor.data()), PELIB_IMAGE_IMPORT_DESCRIPTOR::size());
+			inStream_w.read(reinterpret_cast<char*>(vImportDescriptor.data()), PELIB_IMAGE_IMPORT_DESCRIPTOR::size());
 
 			InputBuffer inpBuffer(vImportDescriptor);
 
@@ -546,7 +549,11 @@ namespace PeLib
 				return ERROR_INVALID_FILE;
 			}
 
-			getStringFromFileOffset(ifFile, vOldIidCurr[i].name, static_cast<unsigned int>(peHeader.rvaToOffset(vOldIidCurr[i].impdesc.Name)), IMPORT_LIBRARY_MAX_LENGTH);
+			getStringFromFileOffset(
+					inStream_w,
+					vOldIidCurr[i].name,
+					static_cast<unsigned int>(peHeader.rvaToOffset(vOldIidCurr[i].impdesc.Name)),
+					IMPORT_LIBRARY_MAX_LENGTH);
 
 			// Space occupied by names
 			// +1 for null terminator
@@ -568,8 +575,8 @@ namespace PeLib
 			PELIB_THUNK_DATA<bits> tdCurr;
 			dword uiVaoft = vOldIidCurr[i].impdesc.OriginalFirstThunk;
 
-			ifFile.clear();
-			ifFile.seekg(static_cast<unsigned int>(peHeader.rvaToOffset(uiVaoft)), std::ios_base::beg);
+			inStream_w.clear();
+			inStream_w.seekg(static_cast<unsigned int>(peHeader.rvaToOffset(uiVaoft)), std::ios_base::beg);
 
 			for(uiIndex = 0; ; uiIndex++)
 			{
@@ -579,7 +586,7 @@ namespace PeLib
 				}
 				uiVaoft += sizeof(tdCurr.itd.Ordinal);
 
-				ifFile.read(reinterpret_cast<char*>(&tdCurr.itd.Ordinal), sizeof(tdCurr.itd.Ordinal));
+				inStream_w.read(reinterpret_cast<char*>(&tdCurr.itd.Ordinal), sizeof(tdCurr.itd.Ordinal));
 
 				// Are we at the end of the list?
 				if (tdCurr.itd.Ordinal == 0 || uiIndex >= PELIB_MAX_IMPORTED_FUNCTIONS)
@@ -613,8 +620,8 @@ namespace PeLib
 
 			PELIB_THUNK_DATA<bits> tdCurr;
 
-			ifFile.clear();
-			ifFile.seekg(static_cast<unsigned int>(peHeader.rvaToOffset(uiVaoft)), std::ios_base::beg);
+			inStream_w.clear();
+			inStream_w.seekg(static_cast<unsigned int>(peHeader.rvaToOffset(uiVaoft)), std::ios_base::beg);
 
 			for(uiIndex = 0; ; uiIndex++)
 			{
@@ -627,7 +634,7 @@ namespace PeLib
 
 				// Read the import thunk. Make sure it's initialized in case the file read fails
 				tdCurr.itd.Ordinal = 0;
-				ifFile.read(reinterpret_cast<char*>(&tdCurr.itd.Ordinal), sizeof(tdCurr.itd.Ordinal));
+				inStream_w.read(reinterpret_cast<char*>(&tdCurr.itd.Ordinal), sizeof(tdCurr.itd.Ordinal));
 
 				// Are we at the end of the list?
 				if (tdCurr.itd.Ordinal == 0 || uiIndex >= PELIB_MAX_IMPORTED_FUNCTIONS)
@@ -668,14 +675,18 @@ namespace PeLib
 						continue;
 					}
 
-					ifFile.seekg(static_cast<unsigned int>(peHeader.rvaToOffset(vOldIidCurr[i].originalfirstthunk[j].itd.Ordinal)), std::ios_base::beg);
+					inStream_w.seekg(static_cast<unsigned int>(peHeader.rvaToOffset(vOldIidCurr[i].originalfirstthunk[j].itd.Ordinal)), std::ios_base::beg);
 
-					ifFile.read(reinterpret_cast<char*>(&vOldIidCurr[i].originalfirstthunk[j].hint), sizeof(vOldIidCurr[i].originalfirstthunk[j].hint));
+					inStream_w.read(reinterpret_cast<char*>(&vOldIidCurr[i].originalfirstthunk[j].hint), sizeof(vOldIidCurr[i].originalfirstthunk[j].hint));
 
-					if (!ifFile)
+					if (!inStream_w)
 						return ERROR_INVALID_FILE;
 
-					getStringFromFileOffset(ifFile, vOldIidCurr[i].originalfirstthunk[j].fname, ifFile.tellg(), IMPORT_SYMBOL_MAX_LENGTH);
+					getStringFromFileOffset(
+							inStream_w,
+							vOldIidCurr[i].originalfirstthunk[j].fname,
+							inStream_w.tellg(),
+							IMPORT_SYMBOL_MAX_LENGTH);
 
 					// Space occupied by names
 					// +1 for null terminator
@@ -697,14 +708,18 @@ namespace PeLib
 						continue;
 					}
 
-					ifFile.seekg(static_cast<unsigned int>(peHeader.rvaToOffset(vOldIidCurr[i].firstthunk[j].itd.Ordinal)), std::ios_base::beg);
+					inStream_w.seekg(static_cast<unsigned int>(peHeader.rvaToOffset(vOldIidCurr[i].firstthunk[j].itd.Ordinal)), std::ios_base::beg);
 
-					ifFile.read(reinterpret_cast<char*>(&vOldIidCurr[i].firstthunk[j].hint), sizeof(vOldIidCurr[i].firstthunk[j].hint));
+					inStream_w.read(reinterpret_cast<char*>(&vOldIidCurr[i].firstthunk[j].hint), sizeof(vOldIidCurr[i].firstthunk[j].hint));
 
-					if (!ifFile)
+					if (!inStream_w)
 						return ERROR_INVALID_FILE;
 
-					getStringFromFileOffset(ifFile, vOldIidCurr[i].firstthunk[j].fname, ifFile.tellg(), IMPORT_SYMBOL_MAX_LENGTH);
+					getStringFromFileOffset(
+							inStream_w,
+							vOldIidCurr[i].firstthunk[j].fname,
+							inStream_w.tellg(),
+							IMPORT_SYMBOL_MAX_LENGTH);
 
 					// Space occupied by names
 					// +1 for null terminator

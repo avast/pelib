@@ -59,25 +59,25 @@ namespace PeLib
 	class IatDirectoryT : public IatDirectory
 	{
 		public:
-		  int read(const std::string& strFilename, const PeHeaderT<bits>& peHeader); // EXPORT
+		  int read(std::istream& inStream, const PeHeaderT<bits>& peHeader); // EXPORT
 	};
 
 	/**
 	* Reads the Import Address table from a file.
-	* @param strFilename Name of the file.
+	* @param inStream Input stream.
 	* @param peHeader A valid PE header which is necessary because some RVA calculations need to be done.
 	**/
 	template <int bits>
-	int IatDirectoryT<bits>::read(const std::string& strFilename, const PeHeaderT<bits>& peHeader)
+	int IatDirectoryT<bits>::read(std::istream& inStream, const PeHeaderT<bits>& peHeader)
 	{
-		std::ifstream ifFile(strFilename.c_str(), std::ios::binary);
+		IStreamWrapper inStream_w(inStream);
 
-		if (!ifFile)
+		if (!inStream_w)
 		{
 			return ERROR_OPENING_FILE;
 		}
 
-		std::uint64_t ulFileSize = fileSize(ifFile);
+		std::uint64_t ulFileSize = fileSize(inStream_w);
 		std::uint64_t dwOffset = peHeader.rvaToOffset(peHeader.getIddIatRva());
 		std::uint64_t dwSize = peHeader.getIddIatSize();
 
@@ -87,10 +87,10 @@ namespace PeLib
 		}
 
 		dwSize = std::min(ulFileSize - dwOffset, dwSize);
-		ifFile.seekg(dwOffset, std::ios::beg);
+		inStream_w.seekg(dwOffset, std::ios::beg);
 
 		std::vector<byte> vBuffer(dwSize);
-		ifFile.read(reinterpret_cast<char*>(vBuffer.data()), dwSize);
+		inStream_w.read(reinterpret_cast<char*>(vBuffer.data()), dwSize);
 
 		InputBuffer inpBuffer{vBuffer};
 		return IatDirectory::read(inpBuffer, dwOffset, ulFileSize);

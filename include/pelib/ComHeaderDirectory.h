@@ -125,24 +125,25 @@ namespace PeLib
 	{
 		public:
 		  /// Read a file's COM+ runtime descriptor directory.
-		  int read(const std::string& strFilename, const PeHeaderT<bits>& peHeader); // EXPORT
+		  int read(std::istream& inStream, const PeHeaderT<bits>& peHeader); // EXPORT
 	};
 
 	/**
 	* Reads a file's COM+ descriptor.
-	* @param strFilename Name of the file.
+	* @param inStream Input stream.
 	* @param peHeader A valid PE header which is necessary because some RVA calculations need to be done.
 	**/
 	template <int bits>
-	int ComHeaderDirectoryT<bits>::read(const std::string& strFilename, const PeHeaderT<bits>& peHeader)
+	int ComHeaderDirectoryT<bits>::read(std::istream& inStream, const PeHeaderT<bits>& peHeader)
 	{
-		std::ifstream ifFile(strFilename.c_str(), std::ios::binary);
-		std::uint64_t ulFileSize = fileSize(ifFile);
+		IStreamWrapper inStream_w(inStream);
 
-		if (!ifFile)
+		if (!inStream_w)
 		{
 			return ERROR_OPENING_FILE;
 		}
+
+		std::uint64_t ulFileSize = fileSize(inStream_w);
 
 		unsigned int uiOffset = peHeader.rvaToOffset(peHeader.getIddComHeaderRva());
 		unsigned int uiSize = peHeader.getIddComHeaderSize();
@@ -152,10 +153,10 @@ namespace PeLib
 			return ERROR_INVALID_FILE;
 		}
 
-		ifFile.seekg(uiOffset, std::ios::beg);
+		inStream_w.seekg(uiOffset, std::ios::beg);
 
 		std::vector<byte> vComDescDirectory(uiSize);
-		ifFile.read(reinterpret_cast<char*>(vComDescDirectory.data()), uiSize);
+		inStream_w.read(reinterpret_cast<char*>(vComDescDirectory.data()), uiSize);
 
 		InputBuffer ibBuffer{vComDescDirectory};
 		ComHeaderDirectory::read(ibBuffer);

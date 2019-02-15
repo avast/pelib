@@ -89,20 +89,22 @@ namespace PeLib
 	{
 		public:
 		  /// Reads the BoundImport directory table from a PE file.
-		  int read(const std::string& strFileName, const PeHeaderT<bits>& peHeader); // EXPORT
+		  int read(std::istream& inStream, const PeHeaderT<bits>& peHeader); // EXPORT
 	};
 
 	/**
 	* Reads the BoundImport directory from a PE file.
-	* @param strModuleName The name of the PE file from which the BoundImport directory is read.
+	* @param inStream Input stream.
 	* @param peHeader A valid PE header which is necessary because some RVA calculations need to be done.
 	**/
 	template <int bits>
-	int BoundImportDirectoryT<bits>::read(const std::string& strModuleName, const PeHeaderT<bits>& peHeader)
+	int BoundImportDirectoryT<bits>::read(
+			std::istream& inStream,
+			const PeHeaderT<bits>& peHeader)
 	{
-		std::ifstream ifFile(strModuleName.c_str(), std::ios::binary);
+		IStreamWrapper inStream_w(inStream);
 
-		if (!ifFile)
+		if (!inStream_w)
 		{
 			return ERROR_OPENING_FILE;
 		}
@@ -110,14 +112,14 @@ namespace PeLib
 		dword dwOffset = peHeader.rvaToOffset(peHeader.getIddBoundImportRva());
 		unsigned int uiSize = peHeader.getIddBoundImportSize();
 
-		if (fileSize(ifFile) < dwOffset + uiSize)
+		if (fileSize(inStream_w) < dwOffset + uiSize)
 		{
 			return ERROR_INVALID_FILE;
 		}
 
 		std::vector<unsigned char> vBimpDir(uiSize);
-		ifFile.seekg(dwOffset, std::ios::beg);
-		ifFile.read(reinterpret_cast<char*>(vBimpDir.data()), uiSize);
+		inStream_w.seekg(dwOffset, std::ios::beg);
+		inStream_w.read(reinterpret_cast<char*>(vBimpDir.data()), uiSize);
 
 		InputBuffer inpBuffer{vBimpDir};
 		return BoundImportDirectory::read(inpBuffer, vBimpDir.data(), uiSize);

@@ -26,11 +26,19 @@ namespace PeLib
 	{
 	}
 
+	PeFile32::PeFile32(std::istream& stream) : PeFileT<32>(stream)
+	{
+	}
+
 	PeFile64::PeFile64() : PeFileT<64>()
 	{
 	}
 
 	PeFile64::PeFile64(const std::string& strFlename) : PeFileT<64>(strFlename)
+	{
+	}
+
+	PeFile64::PeFile64(std::istream& stream) : PeFileT<64>(stream)
 	{
 	}
 

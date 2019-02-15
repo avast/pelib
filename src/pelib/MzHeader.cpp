@@ -121,19 +121,19 @@ namespace PeLib
 	* Reads the MZ header from a file. Note that this function does not verify if a file is actually a MZ file.
 	* For this purpose see #PeFile::MzHeader::isValid. The reason for this is simple: Otherwise it might not
 	* be possible to load damaged PE files to repair them.
-	* @param strFilename Name of the file which will be read.
+	* @param inStream Input stream.
 	* @return A non-zero value is returned if a problem occured.
 	**/
-	int MzHeader::read(const std::string& strFilename)
+	int MzHeader::read(std::istream& inStream)
 	{
-		std::ifstream ifFile(strFilename.c_str(), std::ios::binary);
+		IStreamWrapper inStream_w(inStream);
 
-		if (!ifFile)
+		if (!inStream_w)
 		{
 			return ERROR_OPENING_FILE;
 		}
 
-		std::uint64_t ulFileSize = fileSize(ifFile);
+		std::uint64_t ulFileSize = fileSize(inStream_w);
 		if (ulFileSize < PELIB_IMAGE_DOS_HEADER::size())
 		{
 			return ERROR_INVALID_FILE;
@@ -145,17 +145,16 @@ namespace PeLib
 			setLoaderError(LDR_ERROR_FILE_TOO_BIG);
 		}
 
-		ifFile.seekg(0, std::ios::beg);
+		inStream_w.seekg(0, std::ios::beg);
 
 		originalOffset = 0;
 
 		std::vector<byte> vBuffer(PELIB_IMAGE_DOS_HEADER::size());
-		ifFile.read(reinterpret_cast<char*>(vBuffer.data()), static_cast<unsigned int>(vBuffer.size()));
-		ifFile.seekg(0, std::ios::beg);
+		inStream_w.read(reinterpret_cast<char*>(vBuffer.data()), static_cast<unsigned int>(vBuffer.size()));
+		inStream_w.seekg(0, std::ios::beg);
 		m_headerString.clear();
 		m_headerString.resize(PELIB_IMAGE_DOS_HEADER::size());
-		ifFile.read(&m_headerString[0], PELIB_IMAGE_DOS_HEADER::size());
-		ifFile.close();
+		inStream_w.read(&m_headerString[0], PELIB_IMAGE_DOS_HEADER::size());
 
 		InputBuffer ibBuffer(vBuffer);
 		read(ibBuffer);

@@ -60,7 +60,7 @@ namespace PeLib
 		  void makeValid(Field field); // EXPORT _field
 
 		  /// Reads the MZ header of a file.
-		  int read(const std::string& strFilename); // EXPORT
+		  int read(std::istream& inStream); // EXPORT
 
 		  /// Reads the MZ header from a memory location.
 		  int read(unsigned char* pcBuffer, unsigned int uiSize, unsigned int originalOffs = 0); // EXPORT _fromMemory

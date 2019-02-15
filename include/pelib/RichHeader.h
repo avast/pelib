@@ -35,7 +35,11 @@ namespace PeLib
 			RichHeader();
 			~RichHeader();
 
-			int read(const std::string& strFilename, std::size_t uiOffset, std::size_t uiSize, bool ignoreInvalidKey);
+			int read(
+					std::istream& inStream,
+					std::size_t uiOffset,
+					std::size_t uiSize,
+					bool ignoreInvalidKey);
 			bool isHeaderValid() const;
 			bool isStructureValid() const;
 			std::size_t getNumberOfIterations() const;

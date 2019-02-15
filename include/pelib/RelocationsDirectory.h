@@ -74,16 +74,18 @@ namespace PeLib
 	{
 		public:
 		  /// Read a file's relocations directory.
-		  int read(const std::string& strFilename, const PeHeaderT<bits>& peHeader); // EXPORT
+		  int read(std::istream& inStream, const PeHeaderT<bits>& peHeader); // EXPORT
 	};
 
 	template <int bits>
-	int RelocationsDirectoryT<bits>::read(const std::string& strFilename, const PeHeaderT<bits>& peHeader)
+	int RelocationsDirectoryT<bits>::read(
+			std::istream& inStream,
+			const PeHeaderT<bits>& peHeader)
 	{
-		std::ifstream ifFile(strFilename.c_str(), std::ios::binary);
-		std::uint64_t ulFileSize = fileSize(ifFile);
+		IStreamWrapper inStream_w(inStream);
+		std::uint64_t ulFileSize = fileSize(inStream_w);
 
-		if (!ifFile)
+		if (!inStream_w)
 		{
 			return ERROR_OPENING_FILE;
 		}
@@ -98,10 +100,10 @@ namespace PeLib
 			return ERROR_INVALID_FILE;
 		}
 
-		ifFile.seekg(uiOffset, std::ios::beg);
+		inStream_w.seekg(uiOffset, std::ios::beg);
 
 		std::vector<unsigned char> vRelocDirectory(uiSize);
-		ifFile.read(reinterpret_cast<char*>(vRelocDirectory.data()), uiSize);
+		inStream_w.read(reinterpret_cast<char*>(vRelocDirectory.data()), uiSize);
 
 		InputBuffer ibBuffer{vRelocDirectory};
 		RelocationsDirectory::read(ibBuffer, uiSize);

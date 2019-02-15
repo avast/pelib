@@ -100,7 +100,7 @@ namespace PeLib
 		  unsigned int uiElementRva;
 
 		  /// Reads the next resource element from the InputBuffer.
-		  virtual int read(std::ifstream&, unsigned int, unsigned int, unsigned int, unsigned int, ResourceDirectory* resDir) = 0;
+		  virtual int read(std::istream&, unsigned int, unsigned int, unsigned int, unsigned int, ResourceDirectory* resDir) = 0;
 		  /// Writes the next resource element into the OutputBuffer.
 		  virtual void rebuild(OutputBuffer&, unsigned int, unsigned int, const std::string&) const = 0;
 		  /// Recalculates the tree for different RVA.
@@ -136,7 +136,7 @@ namespace PeLib
 		  PELIB_IMAGE_RESOURCE_DATA_ENTRY entry;
 
 		protected:
-		  int read(std::ifstream& ifFile, unsigned int uiRsrcOffset, unsigned int uiOffset, unsigned int uiRva, unsigned int uiFileSize, ResourceDirectory* resDir);
+		  int read(std::istream& inStream, unsigned int uiRsrcOffset, unsigned int uiOffset, unsigned int uiRva, unsigned int uiFileSize, ResourceDirectory* resDir);
 		  /// Writes the next resource leaf into the OutputBuffer.
 		  void rebuild(OutputBuffer&, unsigned int uiOffset, unsigned int uiRva, const std::string&) const;
 		  /// Recalculates the tree for different RVA.
@@ -194,7 +194,7 @@ namespace PeLib
 
 		protected:
 		  /// Reads the next resource node.
-		  int read(std::ifstream& ifFile, unsigned int uiRsrcOffset, unsigned int uiOffset, unsigned int uiRva, unsigned int uiFileSize, ResourceDirectory* resDir);
+		  int read(std::istream& inStream, unsigned int uiRsrcOffset, unsigned int uiOffset, unsigned int uiRva, unsigned int uiFileSize, ResourceDirectory* resDir);
 		  /// Writes the next resource node into the OutputBuffer.
 		  void rebuild(OutputBuffer&, unsigned int uiOffset, unsigned int uiRva, const std::string&) const;
 		  /// Recalculates the tree for different RVA.
@@ -817,16 +817,19 @@ namespace PeLib
 	{
 		public:
 		  /// Reads the resource directory from a file.
-		  int read(const std::string& strFilename, const PeHeaderT<bits>& peHeader);
+		  int read(std::istream& inStream, const PeHeaderT<bits>& peHeader);
 	};
 
 	/**
 	* Reads the resource directory from a file.
-	* @param strFilename Name of the file.
-	* @param peHeader A valid PE header which is necessary because some RVA calculations need to be done.
+	* @param inStream Input stream.
+	* @param peHeader A valid PE header which is necessary because some RVA
+	* calculations need to be done.
 	**/
 	template <int bits>
-	int ResourceDirectoryT<bits>::read(const std::string& strFilename, const PeHeaderT<bits>& peHeader)
+	int ResourceDirectoryT<bits>::read(
+			std::istream& inStream,
+			const PeHeaderT<bits>& peHeader)
 	{
 		unsigned int uiResDirRva = peHeader.getIddResourceRva();
 		unsigned int uiOffset = peHeader.rvaToOffset(uiResDirRva);
@@ -838,22 +841,22 @@ namespace PeLib
 			return ERROR_INVALID_FILE;
 		}
 
-		std::ifstream ifFile(strFilename.c_str(), std::ios::binary);
+		IStreamWrapper inStream_w(inStream);
 
-		if (!ifFile)
+		if (!inStream_w)
 		{
 			return ERROR_OPENING_FILE;
 		}
 
-		std::uint64_t ulFileSize = fileSize(ifFile);
+		std::uint64_t ulFileSize = fileSize(inStream_w);
 		if (ulFileSize < uiOffset)
 		{
 			return ERROR_INVALID_FILE;
 		}
 
-		ifFile.seekg(uiOffset, std::ios::beg);
+		inStream_w.seekg(uiOffset, std::ios::beg);
 
-		return m_rnRoot.read(ifFile, uiOffset, 0, uiResDirRva, ulFileSize, this);
+		return m_rnRoot.read(inStream_w, uiOffset, 0, uiResDirRva, ulFileSize, this);
 	}
 }
 

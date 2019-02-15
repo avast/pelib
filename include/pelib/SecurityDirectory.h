@@ -21,7 +21,10 @@ namespace PeLib
 		  /// Returns certificate at specified index.
 		  const std::vector<unsigned char>& getCertificate(std::size_t index) const; // EXPORT
 		  /// Read a file's certificate directory.
-		  int read(const std::string& strFilename, unsigned int uiOffset, unsigned int uiSize); // EXPORT
+		  int read(
+				  std::istream& inStream,
+				  unsigned int uiOffset,
+				  unsigned int uiSize); // EXPORT
 	};
 }
 
