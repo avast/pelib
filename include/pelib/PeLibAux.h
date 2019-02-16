@@ -1437,7 +1437,7 @@ class IStreamWrapper
 		//
 		explicit operator bool() const
 		{
-			return _stream.operator bool();
+			return static_cast<bool>(_stream);
 		}
 
 		IStreamWrapper& seekg(std::streampos pos)
