@@ -1,7 +1,7 @@
 ## PeLib
 
-[![Travis CI build status](https://travis-ci.org/avast-tl/pelib.svg?branch=master)](https://travis-ci.org/avast-tl/pelib)
-[![AppVeyor build status](https://ci.appveyor.com/api/projects/status/github/avast-tl/pelib?branch=master&svg=true)](https://ci.appveyor.com/project/avast-tl/pelib?branch=master)
+[![Travis CI build status](https://travis-ci.org/avast/pelib.svg?branch=master)](https://travis-ci.org/avast/pelib)
+[![AppVeyor build status](https://ci.appveyor.com/api/projects/status/github/avast/pelib?branch=master&svg=true)](https://ci.appveyor.com/project/avast/pelib?branch=master)
 
 PE file manipulation library. The [original](http://www.pelib.com/index.php) project by Sebastian Porst was further modified by Avast Software to:
 * Modify directory structure, i.e. split sources and headers.
@@ -29,7 +29,7 @@ target_link_libraries(project-that-needs-pelib pelib)
 ## Build and Installation
 
 * Clone the repository or download the sources into a directory named `pelib`.
-  * `git clone https://github.com/avast-tl/pelib.git`
+  * `git clone https://github.com/avast/pelib.git`
 * Linux:
   * `cd pelib`
   * `mkdir build && cd build`
@@ -59,4 +59,4 @@ Modules added by Avast Software:
 
 ## Contributing
 
-See [RetDec contribution guidelines](https://github.com/avast-tl/retdec/wiki/Contribution-Guidelines).
+See [RetDec contribution guidelines](https://github.com/avast/retdec/wiki/Contribution-Guidelines).
