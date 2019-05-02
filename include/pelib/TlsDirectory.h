@@ -41,13 +41,13 @@ namespace PeLib
 		  int write(const std::string& strFilename, unsigned int dwOffset) const; // EXPORT
 
 		  /// Returns the StartAddressOfRawData value of the TLS header.
-		  dword getStartAddressOfRawData() const; // EXPORT
+		  typename FieldSizes<bits>::VAR4_8 getStartAddressOfRawData() const; // EXPORT
 		  /// Returns the EndAddressOfRawData value of the TLS header.
-		  dword getEndAddressOfRawData() const; // EXPORT
+		  typename FieldSizes<bits>::VAR4_8 getEndAddressOfRawData() const; // EXPORT
 		  /// Returns the AddressOfIndex value of the TLS header.
-		  dword getAddressOfIndex() const; // EXPORT
+		  typename FieldSizes<bits>::VAR4_8 getAddressOfIndex() const; // EXPORT
 		  /// Returns the AddressOfCallBacks value of the TLS header.
-		  dword getAddressOfCallBacks() const; // EXPORT
+		  typename FieldSizes<bits>::VAR4_8 getAddressOfCallBacks() const; // EXPORT
 		  /// Returns the SizeOfZeroFill value of the TLS header.
 		  dword getSizeOfZeroFill() const; // EXPORT
 		  /// Returns the Characteristics value of the TLS header.
@@ -201,7 +201,7 @@ namespace PeLib
 	* @return The StartAddressOfRawData value of the TLS directory.
 	**/
 	template<int bits>
-	dword TlsDirectory<bits>::getStartAddressOfRawData() const
+	typename FieldSizes<bits>::VAR4_8 TlsDirectory<bits>::getStartAddressOfRawData() const
 	{
 		return m_tls.StartAddressOfRawData;
 	}
@@ -210,7 +210,7 @@ namespace PeLib
 	* @return The EndAddressOfRawData value of the TLS directory.
 	**/
 	template<int bits>
-	dword TlsDirectory<bits>::getEndAddressOfRawData() const
+	typename FieldSizes<bits>::VAR4_8 TlsDirectory<bits>::getEndAddressOfRawData() const
 	{
 		return m_tls.EndAddressOfRawData;
 	}
@@ -219,7 +219,7 @@ namespace PeLib
 	* @return The AddressOfIndex value of the TLS directory.
 	**/
 	template<int bits>
-	dword TlsDirectory<bits>::getAddressOfIndex() const
+	typename FieldSizes<bits>::VAR4_8 TlsDirectory<bits>::getAddressOfIndex() const
 	{
 		return m_tls.AddressOfIndex;
 	}
@@ -228,7 +228,7 @@ namespace PeLib
 	* @return The AddressOfCallBacks value of the TLS directory.
 	**/
 	template<int bits>
-	dword TlsDirectory<bits>::getAddressOfCallBacks() const
+	typename FieldSizes<bits>::VAR4_8 TlsDirectory<bits>::getAddressOfCallBacks() const
 	{
 		return m_tls.AddressOfCallBacks;
 	}
