@@ -168,6 +168,13 @@ namespace PeLib
 		return "LDR_ERROR_VALUE_OUT_OF_RANGE";
 	}
 
+	// Anti-assert feature. Debug version of isprint in MS Visual C++ asserts
+	// when the character is not EOF or is >= 255
+	bool pelibIsPrintableChar(int ch)
+	{
+		return ((EOF <= ch) && (ch <= 255)) ? isprint(ch) : false;
+	}
+
 	/**
 	 * @param stream
 	 * @param result
@@ -204,7 +211,7 @@ namespace PeLib
 		{
 			inStream_w.read(namebuffer, 1);
 			if (!inStream_w || !namebuffer[0]) break;
-			if (isPrintable && !isprint(namebuffer[0]))
+			if (isPrintable && !pelibIsPrintableChar(namebuffer[0]))
 			{
 				result.clear();
 				return 0;
