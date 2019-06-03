@@ -49,6 +49,9 @@ namespace PeLib
 		  /// Stores RVAs which are occupied by this import directory.
 		  std::vector<std::pair<unsigned int, unsigned int>> m_occupiedAddresses;
 
+		  // Error detected by the import table parser
+		  LoaderError m_ldrError;
+
 		// I can't convince Borland C++ to compile the function outside of the class declaration.
 		// That's why the function definition is here.
 		/// Tests if a certain function is imported.
@@ -98,6 +101,9 @@ namespace PeLib
 		  std::string getFileName(dword dwFilenr, currdir cdDir) const; // EXPORT
 
 		  void setFileName(dword filenr, currdir dir, const std::string& name); // EXPORT
+
+		  /// Retrieve the loader error
+		  LoaderError loaderError() const;
 
 		  /// Get the hint of an imported function.
 		  word getFunctionHint(dword dwFilenr, dword dwFuncnr, currdir cdDir) const; // EXPORT
@@ -396,6 +402,15 @@ namespace PeLib
 	}
 
 	/**
+	* Get the error that was detected during import table parsing
+	**/
+	template<int bits>
+	LoaderError ImportDirectory<bits>::loaderError() const
+	{
+		return m_ldrError;
+	}
+
+	/**
 	* Get the hint of an imported function.
 	* @param dwFilenr Identifies which file should be checked.
 	* @param dwFuncnr Identifies which function should be checked.
@@ -479,16 +494,19 @@ namespace PeLib
 		VAR4_8 SizeOfImage = peHeader.getSizeOfImage();
 		dword uiIndex;
 
+		m_ldrError = LDR_ERROR_NONE;
+
 		if (!inStream_w)
 		{
 			return ERROR_OPENING_FILE;
 		}
 
 		std::uint64_t ulFileSize = fileSize(inStream_w);
-		unsigned int uiOffset = peHeader.rvaToOffset(peHeader.getIddImportRva());
+		unsigned int uiOffset = (unsigned int)peHeader.rvaToOffset(peHeader.getIddImportRva());
 
-		if (ulFileSize < uiOffset)
+		if ((uiOffset + PELIB_IMAGE_IMPORT_DESCRIPTOR::size()) > ulFileSize)
 		{
+			m_ldrError = LDR_ERROR_IMPDIR_OUT_OF_FILE;
 			return ERROR_INVALID_FILE;
 		}
 
@@ -504,7 +522,10 @@ namespace PeLib
 		{
 			// Are we getting out of the file?
 			if (uiDescOffset + PELIB_IMAGE_IMPORT_DESCRIPTOR::size() > ulFileSize)
+			{
+				m_ldrError = LDR_ERROR_IMPDIR_CUT;
 				break;
+			}
 
 			std::vector<unsigned char> vImportDescriptor(PELIB_IMAGE_IMPORT_DESCRIPTOR::size());
 			inStream_w.read(reinterpret_cast<char*>(vImportDescriptor.data()), PELIB_IMAGE_IMPORT_DESCRIPTOR::size());
@@ -526,7 +547,10 @@ namespace PeLib
 
 			// We ignore names and thunks that go beyond the file
 			if (iidCurr.impdesc.Name > SizeOfImage || iidCurr.impdesc.FirstThunk > SizeOfImage)
+			{
+				m_ldrError = LDR_ERROR_IMPDIR_NAME_OUT_OF_FILE;
 				break;
+			}
 
 			// Ignore too large import directories
 			// Sample: CCE461B6EB23728BA3B8A97B9BE84C0FB9175DB31B9949E64144198AB3F702CE

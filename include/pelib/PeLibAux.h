@@ -79,6 +79,11 @@ namespace PeLib
 		LDR_ERROR_FILE_IS_CUT,                      // The PE file is cut
 		LDR_ERROR_FILE_IS_CUT_LOADABLE,             // The PE file is cut, but loadable
 
+		// Errors from Import Table parser
+		LDR_ERROR_IMPDIR_OUT_OF_FILE,               // Offset of the import directory is out of the file
+		LDR_ERROR_IMPDIR_CUT,                       // The import directory is cut
+		LDR_ERROR_IMPDIR_NAME_OUT_OF_FILE,			// 
+
 		LDR_ERROR_MAX
 	};
 
@@ -963,7 +968,8 @@ namespace PeLib
 		{
 			unsigned int uiSize = 4;
 			if (addroffunc) uiSize += 2;// + 4;
-			if (!funcname.empty()) uiSize += 4 + funcname.size() + 1;
+			if (!funcname.empty())
+				uiSize = (unsigned int)(uiSize + 4 + funcname.size() + 1);
 			return uiSize;
 		}
 	};
