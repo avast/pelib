@@ -16,6 +16,11 @@
 #include <numeric>
 #include <limits>
 
+#ifdef _MSC_VER						// Reduces number of warnings under MS Visual Studio from ~100000 to zero
+#pragma warning(disable:4267)		// C4267: 'initializing': conversion from 'size_t' to '_Ty2', possible loss of data
+#pragma warning(disable:4244)		// C4244: 'argument': conversion from 'uint64_t' to 'unsigned int', possible loss of data
+#endif
+
 #include "pelib/OutputBuffer.h"
 #include "pelib/InputBuffer.h"
 
@@ -79,7 +84,19 @@ namespace PeLib
 		LDR_ERROR_FILE_IS_CUT,                      // The PE file is cut
 		LDR_ERROR_FILE_IS_CUT_LOADABLE,             // The PE file is cut, but loadable
 
+		// Errors from Import Table parser
+		LDR_ERROR_IMPDIR_OUT_OF_FILE,               // Offset of the import directory is out of the file
+		LDR_ERROR_IMPDIR_CUT,                       // Import directory is cut
+		LDR_ERROR_IMPDIR_COUNT_EXCEEDED,            // Number of import descriptors exceeds maximum
+		LDR_ERROR_IMPDIR_NAME_RVA_INVALID,          // RVA of the import name is invalid
+		LDR_ERROR_IMPDIR_THUNK_RVA_INVALID,         // RVA of the import thunk is invalid
+		LDR_ERROR_IMPDIR_IMPORT_COUNT_EXCEEDED,     // Number of imported functions exceeds maximum
+		
+		// Errors from resource parser
+		LDR_ERROR_RSRC_OVER_END_OF_IMAGE,			// Array of resource directory entries goes beyond end of the image
+
 		LDR_ERROR_MAX
+
 	};
 
 	struct LoaderErrorString
@@ -963,7 +980,8 @@ namespace PeLib
 		{
 			unsigned int uiSize = 4;
 			if (addroffunc) uiSize += 2;// + 4;
-			if (!funcname.empty()) uiSize += 4 + funcname.size() + 1;
+			if (!funcname.empty())
+				uiSize = (unsigned int)(uiSize + 4 + funcname.size() + 1);
 			return uiSize;
 		}
 	};
@@ -1039,8 +1057,8 @@ namespace PeLib
 		std::vector<PELIB_EXP_FUNC_INFORMATION> functions;
 		inline unsigned int size() const
 		{
-			return PELIB_IMAGE_EXPORT_DIRECTORY::size() + name.size() + 1 +
-			std::accumulate(functions.begin(), functions.end(), 0, accumulate<PELIB_EXP_FUNC_INFORMATION>);
+			return (unsigned int)(PELIB_IMAGE_EXPORT_DIRECTORY::size() + name.size() + 1 +
+			std::accumulate(functions.begin(), functions.end(), 0, accumulate<PELIB_EXP_FUNC_INFORMATION>));
 		}
 	};
 

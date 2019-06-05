@@ -48,6 +48,8 @@ namespace PeLib
 		  std::vector<PELIB_IMAGE_IMPORT_DIRECTORY<bits> > m_vNewiid;
 		  /// Stores RVAs which are occupied by this import directory.
 		  std::vector<std::pair<unsigned int, unsigned int>> m_occupiedAddresses;
+		  /// Error detected by the import table parser
+		  LoaderError m_ldrError;
 
 		// I can't convince Borland C++ to compile the function outside of the class declaration.
 		// That's why the function definition is here.
@@ -84,6 +86,10 @@ namespace PeLib
 
 		public:
 
+		  /// Constructor
+		  ImportDirectory() : m_ldrError(LDR_ERROR_NONE)
+		  {}
+
 		  /// Add a function to the import directory.
 		  int addFunction(const std::string& strFilename, word wHint); // EXPORT _byHint
 		  /// Add a function to the import directory.
@@ -98,6 +104,10 @@ namespace PeLib
 		  std::string getFileName(dword dwFilenr, currdir cdDir) const; // EXPORT
 
 		  void setFileName(dword filenr, currdir dir, const std::string& name); // EXPORT
+
+		  /// Retrieve the loader error
+		  LoaderError loaderError() const;
+		  void setLoaderError(LoaderError ldrError);
 
 		  /// Get the hint of an imported function.
 		  word getFunctionHint(dword dwFilenr, dword dwFuncnr, currdir cdDir) const; // EXPORT
@@ -396,6 +406,25 @@ namespace PeLib
 	}
 
 	/**
+	* Get the error that was detected during import table parsing
+	**/
+	template<int bits>
+	LoaderError ImportDirectory<bits>::loaderError() const
+	{
+		return m_ldrError;
+	}
+
+	template<int bits>
+	void ImportDirectory<bits>::setLoaderError(LoaderError ldrError)
+	{
+		// Do not override an existing loader error
+		if (m_ldrError == LDR_ERROR_NONE)
+		{
+			m_ldrError = ldrError;
+		}
+	}
+
+	/**
 	* Get the hint of an imported function.
 	* @param dwFilenr Identifies which file should be checked.
 	* @param dwFuncnr Identifies which function should be checked.
@@ -479,16 +508,25 @@ namespace PeLib
 		VAR4_8 SizeOfImage = peHeader.getSizeOfImage();
 		dword uiIndex;
 
+		m_ldrError = LDR_ERROR_NONE;
+
 		if (!inStream_w)
 		{
 			return ERROR_OPENING_FILE;
 		}
 
-		std::uint64_t ulFileSize = fileSize(inStream_w);
-		unsigned int uiOffset = peHeader.rvaToOffset(peHeader.getIddImportRva());
-
-		if (ulFileSize < uiOffset)
+		if(peHeader.getIddImportRva() > peHeader.getSizeOfImage())
 		{
+			setLoaderError(LDR_ERROR_IMPDIR_OUT_OF_FILE);
+			return ERROR_INVALID_FILE;
+		}
+
+		std::uint64_t ulFileSize = fileSize(inStream_w);
+		unsigned int uiOffset = (unsigned int)peHeader.rvaToOffset(peHeader.getIddImportRva());
+
+		if ((uiOffset + PELIB_IMAGE_IMPORT_DESCRIPTOR::size()) > ulFileSize)
+		{
+			setLoaderError(LDR_ERROR_IMPDIR_OUT_OF_FILE);
 			return ERROR_INVALID_FILE;
 		}
 
@@ -504,7 +542,10 @@ namespace PeLib
 		{
 			// Are we getting out of the file?
 			if (uiDescOffset + PELIB_IMAGE_IMPORT_DESCRIPTOR::size() > ulFileSize)
+			{
+				setLoaderError(LDR_ERROR_IMPDIR_CUT);
 				break;
+			}
 
 			std::vector<unsigned char> vImportDescriptor(PELIB_IMAGE_IMPORT_DESCRIPTOR::size());
 			inStream_w.read(reinterpret_cast<char*>(vImportDescriptor.data()), PELIB_IMAGE_IMPORT_DESCRIPTOR::size());
@@ -525,14 +566,26 @@ namespace PeLib
 				break;
 
 			// We ignore names and thunks that go beyond the file
-			if (iidCurr.impdesc.Name > SizeOfImage || iidCurr.impdesc.FirstThunk > SizeOfImage)
+			if (iidCurr.impdesc.Name > SizeOfImage)
+			{
+				setLoaderError(LDR_ERROR_IMPDIR_NAME_RVA_INVALID);
 				break;
+			}
+
+			if (iidCurr.impdesc.FirstThunk > SizeOfImage)
+			{
+				setLoaderError(LDR_ERROR_IMPDIR_THUNK_RVA_INVALID);
+				break;
+			}
 
 			// Ignore too large import directories
 			// Sample: CCE461B6EB23728BA3B8A97B9BE84C0FB9175DB31B9949E64144198AB3F702CE
 			// Number of import descriptors: 0x6253
 			if (vOldIidCurr.size() > PELIB_MAX_IMPORT_DESCRIPTORS)
+			{
+				setLoaderError(LDR_ERROR_IMPDIR_COUNT_EXCEEDED);
 				break;
+			}
 
 			// Push the import descriptor into the vector
 			vOldIidCurr.push_back(iidCurr);
@@ -546,6 +599,7 @@ namespace PeLib
 		{
 			if (!peHeader.isValidRva(vOldIidCurr[i].impdesc.Name))
 			{
+				setLoaderError(LDR_ERROR_IMPDIR_NAME_RVA_INVALID);
 				return ERROR_INVALID_FILE;
 			}
 
@@ -568,9 +622,7 @@ namespace PeLib
 		for (unsigned int i=0;i<vOldIidCurr.size();i++)
 		{
 			if (!hasValidOriginalFirstThunk(vOldIidCurr[i].impdesc, peHeader))
-			{
 				continue;
-			}
 
 			PELIB_THUNK_DATA<bits> tdCurr;
 			dword uiVaoft = vOldIidCurr[i].impdesc.OriginalFirstThunk;
@@ -589,13 +641,23 @@ namespace PeLib
 				inStream_w.read(reinterpret_cast<char*>(&tdCurr.itd.Ordinal), sizeof(tdCurr.itd.Ordinal));
 
 				// Are we at the end of the list?
-				if (tdCurr.itd.Ordinal == 0 || uiIndex >= PELIB_MAX_IMPORTED_FUNCTIONS)
+				if (tdCurr.itd.Ordinal == 0)
 					break;
+
+				// Did we exceed the count of imported functions?
+				if(uiIndex >= PELIB_MAX_IMPORTED_FUNCTIONS)
+				{
+					setLoaderError(LDR_ERROR_IMPDIR_IMPORT_COUNT_EXCEEDED);
+					break;
+				}
 
 				// Check samples that have import name out of the image
 				// Sample: CCE461B6EB23728BA3B8A97B9BE84C0FB9175DB31B9949E64144198AB3F702CE
 				if ((tdCurr.itd.Ordinal & OrdinalMask) == 0 && (tdCurr.itd.Ordinal >= SizeOfImage))
+				{
+					setLoaderError(LDR_ERROR_IMPDIR_NAME_RVA_INVALID);
 					break;
+				}
 
 				// Insert ordinal to the list
 				vOldIidCurr[i].originalfirstthunk.push_back(tdCurr);
@@ -627,6 +689,7 @@ namespace PeLib
 			{
 				if (ulFileSize < peHeader.rvaToOffset(uiVaoft) + sizeof(tdCurr.itd.Ordinal))
 				{
+					setLoaderError(LDR_ERROR_IMPDIR_THUNK_RVA_INVALID);
 					return ERROR_INVALID_FILE;
 				}
 
@@ -637,8 +700,15 @@ namespace PeLib
 				inStream_w.read(reinterpret_cast<char*>(&tdCurr.itd.Ordinal), sizeof(tdCurr.itd.Ordinal));
 
 				// Are we at the end of the list?
-				if (tdCurr.itd.Ordinal == 0 || uiIndex >= PELIB_MAX_IMPORTED_FUNCTIONS)
+				if (tdCurr.itd.Ordinal == 0)
 					break;
+
+				// Did the number of imported functions exceede maximum?
+				if(uiIndex >= PELIB_MAX_IMPORTED_FUNCTIONS)
+				{
+					setLoaderError(LDR_ERROR_IMPDIR_IMPORT_COUNT_EXCEEDED);
+					break;
+				}
 
 				// Check samples that have import name out of the image
 				// Sample: CCE461B6EB23728BA3B8A97B9BE84C0FB9175DB31B9949E64144198AB3F702CE

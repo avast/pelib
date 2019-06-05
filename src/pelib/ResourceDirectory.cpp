@@ -315,6 +315,7 @@ namespace PeLib
 			unsigned int uiOffset,
 			unsigned int uiRva,
 			unsigned int uiFileSize,
+			unsigned int /* uiSizeOfImage */,
 			ResourceDirectory* resDir)
 	{
 		IStreamWrapper inStream_w(inStream);
@@ -627,7 +628,7 @@ namespace PeLib
 			if (children[i].getOffsetToName() & PELIB_IMAGE_RESOURCE_NAME_IS_STRING)
 			{
 				children[i].setOffsetToName(PELIB_IMAGE_RESOURCE_NAME_IS_STRING | uiCurrentOffset);
-				uiCurrentOffset += 2 + (children[i].getName().length() << 1);
+				uiCurrentOffset = (unsigned int)(uiCurrentOffset + 2 + (children[i].getName().length() << 1));
 			}
 
 			// In case of non-leaf node, we recursively call this method on the current node
@@ -659,6 +660,7 @@ namespace PeLib
 			unsigned int uiOffset,
 			unsigned int uiRva,
 			unsigned int uiFileSize,
+			unsigned int uiSizeOfImage,
 			ResourceDirectory* resDir)
 	{
 		IStreamWrapper inStream_w(inStream);
@@ -687,6 +689,15 @@ namespace PeLib
 		unsigned int uiNumberOfEntries = header.NumberOfNamedEntries + header.NumberOfIdEntries;
 
 		resDir->addOccupiedAddressRange(uiElementRva, uiElementRva + PELIB_IMAGE_RESOURCE_DIRECTORY::size() - 1);
+
+		// Windows loader check (PspLocateInPEManifest -> LdrpResGetResourceDirectory):
+		// If the total number of resource entries goes beyond the image, the file is refused to run
+		// Sample: 6318b0a1b57fc70bce5314aefb6cb06c90b7991afeae4e91ffc05ee0c88947d7
+		if ((uiRva + (uiNumberOfEntries * PELIB_IMAGE_RESOURCE_DIRECTORY_ENTRY::size())) > uiSizeOfImage)
+		{
+			resDir->setLoaderError(LDR_ERROR_RSRC_OVER_END_OF_IMAGE);
+			return ERROR_NONE;
+		}
 
 		// Not enough space to be a valid node.
 		if (uiRsrcOffset + uiOffset + PELIB_IMAGE_RESOURCE_DIRECTORY::size() + uiNumberOfEntries * PELIB_IMAGE_RESOURCE_DIRECTORY_ENTRY::size() > fileSize(inStream_w))
@@ -767,7 +778,7 @@ namespace PeLib
 				rc.child = new ResourceLeaf;
 			}
 
-			if (rc.child->read(inStream_w, uiRsrcOffset, value, uiRva, uiFileSize, resDir) != ERROR_NONE)
+			if (rc.child->read(inStream_w, uiRsrcOffset, value, uiRva, uiFileSize, uiSizeOfImage, resDir) != ERROR_NONE)
 			{
 				return ERROR_INVALID_FILE;
 			}
@@ -1029,7 +1040,7 @@ namespace PeLib
 	/**
 	* Constructor
 	*/
-	ResourceDirectory::ResourceDirectory() : m_readOffset(0)
+	ResourceDirectory::ResourceDirectory() : m_readOffset(0), m_ldrError(LDR_ERROR_NONE)
 	{
 
 	}
@@ -1050,6 +1061,23 @@ namespace PeLib
 	const ResourceNode* ResourceDirectory::getRoot() const
 	{
 		return &m_rnRoot;
+	}
+
+	/**
+	* Get the error that was detected during resource parsing
+	**/
+	LoaderError ResourceDirectory::loaderError() const
+	{
+		return m_ldrError;
+	}
+
+	void ResourceDirectory::setLoaderError(LoaderError ldrError)
+	{
+		// Do not override an existing error
+		if (m_ldrError == LDR_ERROR_NONE)
+		{
+			m_ldrError = ldrError;
+		}
 	}
 
 	/**

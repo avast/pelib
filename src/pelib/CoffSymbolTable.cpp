@@ -37,7 +37,7 @@ namespace PeLib
 			inputbuffer >> symbol.TypeSimple;
 			inputbuffer >> symbol.StorageClass;
 			inputbuffer >> symbol.NumberOfAuxSymbols;
-			symbol.Index = i;
+			symbol.Index = (PeLib::dword)i;
 			if (!Zeroes)
 			{
 				if (stringTableSize && NameOffset)
@@ -69,7 +69,7 @@ namespace PeLib
 			symbolTable.push_back(symbol);
 		}
 
-		numberOfStoredSymbols = symbolTable.size();
+		numberOfStoredSymbols = (dword)symbolTable.size();
 	}
 
 	int CoffSymbolTable::read(

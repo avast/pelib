@@ -130,8 +130,8 @@ namespace PeLib
 					rec.BoundDelayImportTableRva   = (dword)normalizeDelayImportValue(rec, peHeader, rec.BoundDelayImportTableRva);
 					rec.UnloadDelayImportTableRva  = (dword)normalizeDelayImportValue(rec, peHeader, rec.UnloadDelayImportTableRva);
 
-					rec.DelayImportAddressTableOffset = peHeader.rvaToOffset(rec.DelayImportAddressTableRva);
-					rec.DelayImportNameTableOffset = peHeader.rvaToOffset(rec.DelayImportNameTableRva);
+					rec.DelayImportAddressTableOffset = (dword)peHeader.rvaToOffset(rec.DelayImportAddressTableRva);
+					rec.DelayImportNameTableOffset = (dword)peHeader.rvaToOffset(rec.DelayImportNameTableRva);
 
 					// Get name of library
 					getStringFromFileOffset(inStream_w, rec.Name, (std::size_t)peHeader.rvaToOffset(rec.NameRva), IMPORT_LIBRARY_MAX_LENGTH);

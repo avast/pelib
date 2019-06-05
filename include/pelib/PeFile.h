@@ -718,6 +718,16 @@ namespace PeLib
 		if (ldrError != LDR_ERROR_NONE)
 			return ldrError;
 
+		// Check errors in import directory
+		ldrError = impDir().loaderError();
+		if (ldrError != LDR_ERROR_NONE)
+			return ldrError;
+
+		// Check errors in resource directory
+		ldrError = resDir().loaderError();
+		if (ldrError != LDR_ERROR_NONE)
+			return ldrError;
+
 		// Nothing wrond found
 		return LDR_ERROR_NONE;
 	}
