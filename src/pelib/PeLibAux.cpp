@@ -62,6 +62,18 @@ namespace PeLib
 		{"LDR_ERROR_INVALID_SIZE_OF_IMAGE",        "IMAGE_OPTIONAL_HEADER::SizeOfImage doesn't match the (header+sections)" },
 		{"LDR_ERROR_FILE_IS_CUT",                  "The PE file is cut" },
 		{"LDR_ERROR_FILE_IS_CUT_LOADABLE",         "The PE file is cut, but loadable" },
+
+		// Import directory detected errors
+		{"LDR_ERROR_IMPDIR_OUT_OF_FILE",           "Offset of the import directory is out of the file" },
+		{"LDR_ERROR_IMPDIR_CUT",                   "Import directory is cut" },
+		{"LDR_ERROR_IMPDIR_COUNT_EXCEEDED",        "Number of import descriptors exceeds maximum" },
+		{"LDR_ERROR_IMPDIR_NAME_RVA_INVALID",      "RVA of the import name is invalid" },
+		{"LDR_ERROR_IMPDIR_THUNK_RVA_INVALID",     "RVA of the import thunk is invalid" },
+		{"LDR_ERROR_IMPDIR_IMPORT_COUNT_EXCEEDED", "Number of imported functions exceeds maximum" },
+
+		// Resource directory detected errors
+		{"LDR_ERROR_RSRC_OVER_END_OF_IMAGE",       "Array of resource directory entries goes beyond end of the image" },
+
 	};
 
 	PELIB_IMAGE_FILE_MACHINE_ITERATOR::PELIB_IMAGE_FILE_MACHINE_ITERATOR()
@@ -164,8 +176,10 @@ namespace PeLib
 			return userFriendly ? LdrErrStrings[index].loaderErrorUserFriendly : LdrErrStrings[index].loaderErrorString;
 		}
 
-		// When the index is out of range
-		return "LDR_ERROR_VALUE_OUT_OF_RANGE";
+		// If this assert triggers, we need to add the missing string
+		// to the PeLib::LdrErrStrings vector
+		assert(false);
+		return "LDR_ERROR_DESCRIPTIVE_STRING_MISSING";
 	}
 
 	// Anti-assert feature. Debug version of isprint in MS Visual C++ asserts
@@ -498,6 +512,6 @@ namespace PeLib
 			size += moduleForwarders[i].size();
 		}
 
-		return size + PELIB_IMAGE_BOUND_IMPORT_DESCRIPTOR::size() + strModuleName.size() + 1;
+		return (unsigned int)(size + PELIB_IMAGE_BOUND_IMPORT_DESCRIPTOR::size() + strModuleName.size() + 1);
 	}
 }

@@ -11,7 +11,7 @@ namespace PeLib
 {
 	unsigned int SecurityDirectory::calcNumberOfCertificates() const
 	{
-		return m_certs.size();
+		return (unsigned int)m_certs.size();
 	}
 
 	const std::vector<unsigned char>& SecurityDirectory::getCertificate(std::size_t index) const

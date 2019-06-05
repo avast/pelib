@@ -33,7 +33,7 @@ namespace PeLib
 		if (ulIndex >= m_vBuffer.size())
 			return;
 
-		ulSize = ulIndex + ulSize > m_vBuffer.size() ? m_vBuffer.size() - ulIndex : ulSize;
+		ulSize = (unsigned long)(ulIndex + ulSize > m_vBuffer.size() ? m_vBuffer.size() - ulIndex : ulSize);
 
 		std::copy(m_vBuffer.data() + ulIndex, m_vBuffer.data() + ulIndex + ulSize, lpBuffer);
 		ulIndex += ulSize;

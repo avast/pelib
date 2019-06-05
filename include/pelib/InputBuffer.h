@@ -39,7 +39,7 @@ namespace PeLib
 
 			std::vector<char> data(sizeof(T), 0);
 			std::size_t size = ulIndex + sizeof(T) > m_vBuffer.size() ? m_vBuffer.size() - ulIndex : sizeof(T);
-			read(data.data(), size);
+			read(data.data(), (unsigned long)size);
 			value = *reinterpret_cast<T*>(data.data());
 			return *this;
 		  }

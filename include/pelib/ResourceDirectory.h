@@ -100,7 +100,7 @@ namespace PeLib
 		  unsigned int uiElementRva;
 
 		  /// Reads the next resource element from the InputBuffer.
-		  virtual int read(std::istream&, unsigned int, unsigned int, unsigned int, unsigned int, ResourceDirectory* resDir) = 0;
+		  virtual int read(std::istream&, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, ResourceDirectory* resDir) = 0;
 		  /// Writes the next resource element into the OutputBuffer.
 		  virtual void rebuild(OutputBuffer&, unsigned int, unsigned int, const std::string&) const = 0;
 		  /// Recalculates the tree for different RVA.
@@ -136,7 +136,7 @@ namespace PeLib
 		  PELIB_IMAGE_RESOURCE_DATA_ENTRY entry;
 
 		protected:
-		  int read(std::istream& inStream, unsigned int uiRsrcOffset, unsigned int uiOffset, unsigned int uiRva, unsigned int uiFileSize, ResourceDirectory* resDir);
+		  int read(std::istream& inStream, unsigned int uiRsrcOffset, unsigned int uiOffset, unsigned int uiRva, unsigned int uiFileSize, unsigned int uiSizeOfImage, ResourceDirectory* resDir);
 		  /// Writes the next resource leaf into the OutputBuffer.
 		  void rebuild(OutputBuffer&, unsigned int uiOffset, unsigned int uiRva, const std::string&) const;
 		  /// Recalculates the tree for different RVA.
@@ -194,7 +194,7 @@ namespace PeLib
 
 		protected:
 		  /// Reads the next resource node.
-		  int read(std::istream& inStream, unsigned int uiRsrcOffset, unsigned int uiOffset, unsigned int uiRva, unsigned int uiFileSize, ResourceDirectory* resDir);
+		  int read(std::istream& inStream, unsigned int uiRsrcOffset, unsigned int uiOffset, unsigned int uiRva, unsigned int uiFileSize, unsigned int uiSizeOfImage, ResourceDirectory* resDir);
 		  /// Writes the next resource node into the OutputBuffer.
 		  void rebuild(OutputBuffer&, unsigned int uiOffset, unsigned int uiRva, const std::string&) const;
 		  /// Recalculates the tree for different RVA.
@@ -387,6 +387,8 @@ namespace PeLib
 		  std::set<std::size_t> m_resourceNodeOffsets;
 		  /// Stores RVAs which are occupied by this export directory.
 		  std::vector<std::pair<unsigned int, unsigned int>> m_occupiedAddresses;
+		  /// Error detected by the import table parser
+		  LoaderError m_ldrError;
 
 		  // Prepare for some crazy syntax below to make Digital Mars happy.
 
@@ -438,6 +440,10 @@ namespace PeLib
 
 		  ResourceNode* getRoot();
 		  const ResourceNode* getRoot() const;
+
+		  /// Retrieve the loader error
+		  LoaderError loaderError() const;
+		  void setLoaderError(LoaderError ldrError);
 
 		  /// Corrects a erroneous resource directory.
 		  void makeValid();
@@ -856,7 +862,7 @@ namespace PeLib
 
 		inStream_w.seekg(uiOffset, std::ios::beg);
 
-		return m_rnRoot.read(inStream_w, uiOffset, 0, uiResDirRva, ulFileSize, this);
+		return m_rnRoot.read(inStream_w, uiOffset, 0, uiResDirRva, ulFileSize, peHeader.getSizeOfImage(), this);
 	}
 }
 
