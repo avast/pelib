@@ -91,9 +91,12 @@ namespace PeLib
 		LDR_ERROR_IMPDIR_NAME_RVA_INVALID,          // RVA of the import name is invalid
 		LDR_ERROR_IMPDIR_THUNK_RVA_INVALID,         // RVA of the import thunk is invalid
 		LDR_ERROR_IMPDIR_IMPORT_COUNT_EXCEEDED,     // Number of imported functions exceeds maximum
-		
+
 		// Errors from resource parser
-		LDR_ERROR_RSRC_OVER_END_OF_IMAGE,			// Array of resource directory entries goes beyond end of the image
+		LDR_ERROR_RSRC_OVER_END_OF_IMAGE,           // Array of resource directory entries goes beyond end of the image
+
+		// Other errors
+		LDR_ERROR_MISSING_DEPENDENCY,               // One of the statically imported modules may be missing
 
 		LDR_ERROR_MAX
 
