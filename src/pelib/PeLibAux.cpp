@@ -74,9 +74,6 @@ namespace PeLib
 		// Resource directory detected errors
 		{"LDR_ERROR_RSRC_OVER_END_OF_IMAGE",       "Array of resource directory entries goes beyond end of the image" },
 
-		// Other problems
-		{"LDR_ERROR_MISSING_DEPENDENCY",           "One of the statically imported modules may be missing - file may not run" },
-
 	};
 
 	PELIB_IMAGE_FILE_MACHINE_ITERATOR::PELIB_IMAGE_FILE_MACHINE_ITERATOR()

@@ -95,9 +95,6 @@ namespace PeLib
 		// Errors from resource parser
 		LDR_ERROR_RSRC_OVER_END_OF_IMAGE,           // Array of resource directory entries goes beyond end of the image
 
-		// Other errors
-		LDR_ERROR_MISSING_DEPENDENCY,               // One of the statically imported modules may be missing
-
 		LDR_ERROR_MAX
 
 	};
