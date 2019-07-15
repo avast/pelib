@@ -221,7 +221,7 @@ namespace PeLib
 			if (!inStream_w)
 				return ERROR_INVALID_FILE;
 
-			efiCurr.ordinal = i;
+			efiCurr.ordinal = iedCurr.ied.Base + i;
 			iedCurr.functions.push_back(efiCurr);
 
 			m_occupiedAddresses.emplace_back(
@@ -248,7 +248,7 @@ namespace PeLib
 			else if (ordinal >= iedCurr.functions.size())
 				continue;
 
-			iedCurr.functions[ordinal].ordinal = ordinal;
+			iedCurr.functions[ordinal].ordinal = iedCurr.ied.Base + ordinal;
 
 			offset = peHeader.rvaToOffset(iedCurr.ied.AddressOfNames) + i*sizeof(efiCurr.addrofname);
 			if (offset >= ulFileSize)
