@@ -1436,13 +1436,13 @@ namespace PeLib
 	 * Determines the validity of given RVA. RVA has to be smaller than size of image.
 	 * If RVA is smaller than file alignment, it is valid. If RVA falls into range of
 	 * any section, it is valid. If the section has no virtual size, its raw size is considered.
-	 * @param dwRva A relative virtual address.
+	 * @param rva A relative virtual address.
 	 * @return True if RVA is valid, otherwise false.
 	 */
 	template<int x>
-	bool PeHeaderT<x>::isValidRva(VAR4_8 dwRva) const
+	bool PeHeaderT<x>::isValidRva(VAR4_8 rva) const
 	{
-		if (dwRva >= getSizeOfImage())
+		if (rva >= getSizeOfImage())
 			return false;
 
 		// If there are no sections, the compare with size of image is sufficient.
@@ -1450,14 +1450,27 @@ namespace PeLib
 			return true;
 
 		// Everything under file alignment should be allowed.
-		if (dwRva < getFileAlignment())
+		if (rva < getFileAlignment())
 			return true;
 
 		for (word i = 0; i < calcNumberOfSections(); ++i)
 		{
-			// If VirtualSize is 0 then use size of raw data.
-			VAR4_8 size = getVirtualSize(i) == 0 ? getSizeOfRawData(i) : getVirtualSize(i);
-			if (getVirtualAddress(i) <= dwRva && dwRva < getVirtualAddress(i) + size)
+			// Sample 91DE52AB3F94A6372088DD843485414BA2B3734BDF58C4DE40DF3B50B4301C57:
+			// Section[0].VirtualAddress = 0x1000
+			// Section[0].VirtualSize = 0x3428 (in fact 0x4000 due to section alignment)
+			// Section[0].SizeOfRawData = 0x3600
+			// IMAGE_IMPORT_DESCRIPTOR[0]::Name is 0x44DE, which is evaluated as invalid if alignment is not taken into account
+
+			dword beginOfSection = getVirtualAddress(i);
+			dword sizeOfSection = getVirtualSize(i);
+
+			// Perform proper alignment on the section length
+			if (sizeOfSection == 0)
+				sizeOfSection = getSizeOfRawData(i);
+			sizeOfSection = AlignToSize(sizeOfSection, getSectionAlignment());
+
+			// OK if the RVA is within reach of the section
+			if (beginOfSection <= rva && rva < beginOfSection + sizeOfSection)
 				return true;
 		}
 
