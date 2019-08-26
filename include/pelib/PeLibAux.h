@@ -1239,6 +1239,7 @@ namespace PeLib
 			bool isNotTooLong = false);
 
 	const char * getLoaderErrorString(LoaderError ldrError, bool userFriendly = false);
+	bool getLoaderErrorLoadableAnyway(LoaderError ldrError);
 
 	/// Determines if a file is a 32bit or 64bit PE file.
 	unsigned int getFileType(const std::string strFilename);

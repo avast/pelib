@@ -693,6 +693,7 @@ namespace PeLib
 		// Windows loader check (PspLocateInPEManifest -> LdrpResGetResourceDirectory):
 		// If the total number of resource entries goes beyond the image, the file is refused to run
 		// Sample: 6318b0a1b57fc70bce5314aefb6cb06c90b7991afeae4e91ffc05ee0c88947d7
+		// However, such sample can still be executed in Windows XP - based emulator
 		if ((uiRva + (uiNumberOfEntries * PELIB_IMAGE_RESOURCE_DIRECTORY_ENTRY::size())) > uiSizeOfImage)
 		{
 			resDir->setLoaderError(LDR_ERROR_RSRC_OVER_END_OF_IMAGE);
