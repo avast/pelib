@@ -184,7 +184,7 @@ namespace PeLib
 
 	bool getLoaderErrorLoadableAnyway(LoaderError ldrError)
 	{
-		// These errors indicate damaged resource, but the file is usually loadable anyway
+		// These errors indicate damaged PE file, but the file is usually loadable anyway
 		return (ldrError == LDR_ERROR_FILE_IS_CUT_LOADABLE || ldrError == LDR_ERROR_RSRC_OVER_END_OF_IMAGE);
 	}
 
