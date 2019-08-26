@@ -182,6 +182,12 @@ namespace PeLib
 		return "LDR_ERROR_DESCRIPTIVE_STRING_MISSING";
 	}
 
+	bool getLoaderErrorLoadableAnyway(LoaderError ldrError)
+	{
+		// These errors indicate damaged resource, but the file is usually loadable anyway
+		return (ldrError == LDR_ERROR_FILE_IS_CUT_LOADABLE || ldrError == LDR_ERROR_RSRC_OVER_END_OF_IMAGE);
+	}
+
 	// Anti-assert feature. Debug version of isprint in MS Visual C++ asserts
 	// when the character is not EOF or is >= 255
 	bool pelibIsPrintableChar(int ch)
