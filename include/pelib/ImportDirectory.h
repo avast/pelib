@@ -579,8 +579,8 @@ namespace PeLib
 			}
 
 			// Ignore too large import directories
-			// Sample: CCE461B6EB23728BA3B8A97B9BE84C0FB9175DB31B9949E64144198AB3F702CE
-			// Number of import descriptors: 0x6253
+			// Sample: CCE461B6EB23728BA3B8A97B9BE84C0FB9175DB31B9949E64144198AB3F702CE, # of impdesc 0x6253 (invalid)
+			// Sample: 395e64e7071d35cb85d8312095aede5166db731aac44920679eee5c7637cc58c, # of impdesc 0x0131 (valid)
 			if (vOldIidCurr.size() > PELIB_MAX_IMPORT_DESCRIPTORS)
 			{
 				setLoaderError(LDR_ERROR_IMPDIR_COUNT_EXCEEDED);
