@@ -4,21 +4,17 @@ matrix:
   fast_finish: true
   include:
     - os: linux
-      dist: trusty
-      compiler: gcc-4.9
+      dist: xenial
       addons:
         apt:
-          sources:
-            - ubuntu-toolchain-r-test
           packages:
             - build-essential
-            - gcc-4.9
-            - g++-4.9
+            - gcc-multilib
             - cmake
       env:
-        - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9 && NPROC=$(nproc)"
+        - MATRIX_EVAL="NPROC=$(nproc)"
     - os: osx
-      osx_image: xcode8.3
+      osx_image: xcode11.2
       env:
         - MATRIX_EVAL="NPROC=$(sysctl -n hw.physicalcpu)"
 
