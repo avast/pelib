@@ -9,7 +9,6 @@ matrix:
         apt:
           packages:
             - build-essential
-            - gcc-multilib
             - cmake
       env:
         - MATRIX_EVAL="NPROC=$(nproc)"
