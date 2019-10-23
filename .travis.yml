@@ -36,6 +36,8 @@ branches:
     - master
     # Version tags.
     - /^v?\d+\.\d+.*$/
+    # TODO: temporarily enabled
+    - c++17
 
 notifications:
   email:
