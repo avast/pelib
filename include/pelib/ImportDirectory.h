@@ -74,7 +74,7 @@ namespace PeLib
 						auto Iter = std::find_if(
 								FileIter->originalfirstthunk.begin(),
 								FileIter->originalfirstthunk.end(),
-								std::bind(comp(), std::placeholders::_1, value)
+								std::bind(comp, std::placeholders::_1, value)
 						);
 						if (Iter != FileIter->originalfirstthunk.end())
 						{
