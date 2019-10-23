@@ -546,7 +546,11 @@ namespace PeLib
 	void ResourceNode::makeValid()
 	{
 		std::sort(children.begin(), children.end());
-		header.NumberOfNamedEntries = static_cast<PeLib::word>(std::count_if(children.begin(), children.end(), std::mem_fun_ref(&ResourceChild::isNamedResource)));
+		header.NumberOfNamedEntries = static_cast<PeLib::word>(std::count_if(
+				children.begin(),
+				children.end(),
+				[](const auto& i) { return i.isNamedResource(); }
+		));
 		header.NumberOfIdEntries = static_cast<unsigned int>(children.size()) - header.NumberOfNamedEntries;
 	}
 
@@ -573,10 +577,6 @@ namespace PeLib
 		obBuffer.insert(uiOffset + 8, header.MajorVersion);
 		obBuffer.insert(uiOffset + 10, header.MinorVersion);
 		//std::cout << pad << "Children: " << children.size() << std::endl;
-		//std::cout << pad << std::count_if(children.begin(), children.end(), std::mem_fun_ref(&ResourceChild::isNamedResource)) << std::endl;
-		//std::cout << pad << children.size() - std::count_if(children.begin(), children.end(), std::mem_fun_ref(&ResourceChild::isNamedResource)) << std::endl;
-//		obBuffer << std::count_if(children.begin(), children.end(), std::mem_fun_ref(&ResourceChild::isNamedResource));
-//		obBuffer << children.size() - std::count_if(children.begin(), children.end(), std::mem_fun_ref(&ResourceChild::isNamedResource));
 		obBuffer.insert(uiOffset + 12, header.NumberOfNamedEntries);
 		obBuffer.insert(uiOffset + 14, header.NumberOfIdEntries);
 
@@ -1168,7 +1168,11 @@ namespace PeLib
 	**/
 	int ResourceDirectory::addResourceType(dword dwResTypeId)
 	{
-		std::vector<ResourceChild>::iterator Iter = std::find_if(m_rnRoot.children.begin(), m_rnRoot.children.end(), std::bind2nd(std::mem_fun_ref(&ResourceChild::equalId), dwResTypeId));
+		std::vector<ResourceChild>::iterator Iter = std::find_if(
+				m_rnRoot.children.begin(),
+				m_rnRoot.children.end(),
+				[&](const auto& i) { return i.equalId(dwResTypeId); }
+		);
 		if (Iter != m_rnRoot.children.end())
 		{
 			return ERROR_DUPLICATE_ENTRY;
@@ -1189,7 +1193,11 @@ namespace PeLib
 	**/
 	int ResourceDirectory::addResourceType(const std::string& strResTypeName)
 	{
-		std::vector<ResourceChild>::iterator Iter = std::find_if(m_rnRoot.children.begin(), m_rnRoot.children.end(), std::bind2nd(std::mem_fun_ref(&ResourceChild::equalName), strResTypeName));
+		auto Iter = std::find_if(
+				m_rnRoot.children.begin(),
+				m_rnRoot.children.end(),
+				[&](const auto& i) { return i.equalName(strResTypeName); }
+		);
 		if (Iter != m_rnRoot.children.end())
 		{
 			return ERROR_DUPLICATE_ENTRY;
@@ -1210,7 +1218,11 @@ namespace PeLib
 	**/
 	int ResourceDirectory::removeResourceType(dword dwResTypeId)
 	{
-		std::vector<ResourceChild>::iterator Iter = std::find_if(m_rnRoot.children.begin(), m_rnRoot.children.end(), std::bind2nd(std::mem_fun_ref(&ResourceChild::equalId), dwResTypeId));
+		auto Iter = std::find_if(
+				m_rnRoot.children.begin(),
+				m_rnRoot.children.end(),
+				[&](const auto& i) { return i.equalId(dwResTypeId); }
+		);
 		if (Iter == m_rnRoot.children.end())
 		{
 			return ERROR_ENTRY_NOT_FOUND;
@@ -1234,7 +1246,11 @@ namespace PeLib
 	**/
 	int ResourceDirectory::removeResourceType(const std::string& strResTypeName)
 	{
-		std::vector<ResourceChild>::iterator Iter = std::find_if(m_rnRoot.children.begin(), m_rnRoot.children.end(), std::bind2nd(std::mem_fun_ref(&ResourceChild::equalName), strResTypeName));
+		auto Iter = std::find_if(
+				m_rnRoot.children.begin(),
+				m_rnRoot.children.end(),
+				[&](const auto& i) { return i.equalName(strResTypeName); }
+		);
 		if (Iter == m_rnRoot.children.end())
 		{
 			return ERROR_ENTRY_NOT_FOUND;
@@ -1412,7 +1428,11 @@ namespace PeLib
 	**/
 	int ResourceDirectory::resourceTypeIdToIndex(dword dwResTypeId) const
 	{
-		std::vector<ResourceChild>::const_iterator Iter = std::find_if(m_rnRoot.children.begin(), m_rnRoot.children.end(), std::bind2nd(std::mem_fun_ref(&ResourceChild::equalId), dwResTypeId));
+		auto Iter = std::find_if(
+				m_rnRoot.children.begin(),
+				m_rnRoot.children.end(),
+				[&](const auto& i) { return i.equalId(dwResTypeId); }
+		);
 		if (Iter == m_rnRoot.children.end()) return -1;
 		return static_cast<unsigned int>(std::distance(m_rnRoot.children.begin(), Iter));
 	}
@@ -1424,7 +1444,11 @@ namespace PeLib
 	**/
 	int ResourceDirectory::resourceTypeNameToIndex(const std::string& strResTypeName) const
 	{
-		std::vector<ResourceChild>::const_iterator Iter = std::find_if(m_rnRoot.children.begin(), m_rnRoot.children.end(), std::bind2nd(std::mem_fun_ref(&ResourceChild::equalName), strResTypeName));
+		auto Iter = std::find_if(
+				m_rnRoot.children.begin(),
+				m_rnRoot.children.end(),
+				[&](const auto& i) { return i.equalName(strResTypeName); }
+		);
 		if (Iter == m_rnRoot.children.end()) return -1;
 		return static_cast<unsigned int>(std::distance(m_rnRoot.children.begin(), Iter));
 	}
@@ -1444,7 +1468,11 @@ namespace PeLib
 //			++IterD;
 //		}
 
-		std::vector<ResourceChild>::const_iterator Iter = std::find_if(m_rnRoot.children.begin(), m_rnRoot.children.end(), std::bind2nd(std::mem_fun_ref(&ResourceChild::equalId), dwId));
+		auto Iter = std::find_if(
+				m_rnRoot.children.begin(),
+				m_rnRoot.children.end(),
+				[&](const auto& i) { return i.equalId(dwId); }
+		);
 		if (Iter == m_rnRoot.children.end())
 		{
 			return 0xFFFFFFFF;
@@ -1463,7 +1491,11 @@ namespace PeLib
 	**/
 	unsigned int ResourceDirectory::getNumberOfResources(const std::string& strResTypeName) const
 	{
-		std::vector<ResourceChild>::const_iterator Iter = std::find_if(m_rnRoot.children.begin(), m_rnRoot.children.end(), std::bind2nd(std::mem_fun_ref(&ResourceChild::equalName), strResTypeName));
+		auto Iter = std::find_if(
+				m_rnRoot.children.begin(),
+				m_rnRoot.children.end(),
+				[&](const auto& i) { return i.equalName(strResTypeName); }
+		);
 		if (Iter == m_rnRoot.children.end())
 		{
 			return 0xFFFFFFFF;

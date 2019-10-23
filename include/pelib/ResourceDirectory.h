@@ -331,7 +331,11 @@ namespace PeLib
 		static void fix(ResourceNode* node)
 		{
 			node->header.NumberOfIdEntries = static_cast<PeLib::word>(
-				node->children.size() - std::count_if(node->children.begin(), node->children.end(), std::mem_fun_ref(&ResourceChild::isNamedResource))
+				node->children.size() - std::count_if(
+						node->children.begin(),
+						node->children.end(),
+						[](const auto& i) { return i.isNamedResource(); }
+				)
 			);
 		}
 	};
@@ -344,7 +348,11 @@ namespace PeLib
 		static void fix(ResourceNode* node)
 		{
 			node->header.NumberOfNamedEntries = static_cast<PeLib::word>(
-				std::count_if(node->children.begin(), node->children.end(), std::mem_fun_ref(&ResourceChild::isNamedResource))
+				std::count_if(
+					node->children.begin(),
+					node->children.end(),
+					[](const auto& i) { return i.isNamedResource(); }
+				)
 			);
 		}
 	};
@@ -594,20 +602,22 @@ namespace PeLib
 	template<typename S, typename T>
 	std::vector<ResourceChild>::const_iterator ResourceDirectory::locateResourceT(S restypeid, T resid) const
 	{
-		typedef bool(ResourceChild::*CompFunc1)(S) const;
-		typedef bool(ResourceChild::*CompFunc2)(T) const;
-
-		CompFunc1 comp1 = ResComparer<S>::comp();
-		CompFunc2 comp2 = ResComparer<T>::comp();
-
-		std::vector<ResourceChild>::const_iterator Iter = std::find_if(m_rnRoot.children.begin(), m_rnRoot.children.end(), std::bind2nd(std::mem_fun_ref(comp1), restypeid));
+		auto Iter = std::find_if(
+				m_rnRoot.children.begin(),
+				m_rnRoot.children.end(),
+				std::bind(ResComparer<S>::comp(), std::placeholders::_1, restypeid)
+		);
 		if (Iter == m_rnRoot.children.end())
 		{
 			return Iter;
 		}
 
 		ResourceNode* currNode = static_cast<ResourceNode*>(Iter->child);
-		std::vector<ResourceChild>::const_iterator ResIter = std::find_if(currNode->children.begin(), currNode->children.end(), std::bind2nd(std::mem_fun_ref(comp2), resid));
+		auto ResIter = std::find_if(
+				currNode->children.begin(),
+				currNode->children.end(),
+				std::bind(ResComparer<T>::comp(), std::placeholders::_1, resid)
+		);
 		if (ResIter == currNode->children.end())
 		{
 			return ResIter;
@@ -626,20 +636,22 @@ namespace PeLib
 	template<typename S, typename T>
 	std::vector<ResourceChild>::iterator ResourceDirectory::locateResourceT(S restypeid, T resid)
 	{
-		typedef bool(ResourceChild::*CompFunc1)(S) const;
-		typedef bool(ResourceChild::*CompFunc2)(T) const;
-
-		CompFunc1 comp1 = ResComparer<S>::comp();
-		CompFunc2 comp2 = ResComparer<T>::comp();
-
-		std::vector<ResourceChild>::iterator Iter = std::find_if(m_rnRoot.children.begin(), m_rnRoot.children.end(), std::bind2nd(std::mem_fun_ref(comp1), restypeid));
+		auto Iter = std::find_if(
+				m_rnRoot.children.begin(),
+				m_rnRoot.children.end(),
+				std::bind(ResComparer<S>::comp(), std::placeholders::_1, restypeid)
+		);
 		if (Iter == m_rnRoot.children.end())
 		{
 			return Iter;
 		}
 
 		ResourceNode* currNode = static_cast<ResourceNode*>(Iter->child);
-		std::vector<ResourceChild>::iterator ResIter = std::find_if(currNode->children.begin(), currNode->children.end(), std::bind2nd(std::mem_fun_ref(comp2), resid));
+		auto ResIter = std::find_if(
+				currNode->children.begin(),
+				currNode->children.end(),
+				std::bind(ResComparer<T>::comp(), std::placeholders::_1, resid)
+		);
 		if (ResIter == currNode->children.end())
 		{
 			return ResIter;
@@ -657,13 +669,11 @@ namespace PeLib
 	template<typename S, typename T>
 	int ResourceDirectory::addResourceT(S restypeid, T resid, ResourceChild& rc)
 	{
-		typedef bool(ResourceChild::*CompFunc1)(S) const;
-		typedef bool(ResourceChild::*CompFunc2)(T) const;
-
-		CompFunc1 comp1 = ResComparer<S>::comp();
-		CompFunc2 comp2 = ResComparer<T>::comp();
-
-		std::vector<ResourceChild>::iterator Iter = std::find_if(m_rnRoot.children.begin(), m_rnRoot.children.end(), std::bind2nd(std::mem_fun_ref(comp1), restypeid));
+		auto Iter = std::find_if(
+				m_rnRoot.children.begin(),
+				m_rnRoot.children.end(),
+				std::bind(ResComparer<S>::comp(), std::placeholders::_1, restypeid)
+		);
 		if (Iter == m_rnRoot.children.end())
 		{
 			return ERROR_ENTRY_NOT_FOUND;
@@ -671,7 +681,11 @@ namespace PeLib
 		}
 
 		ResourceNode* currNode = static_cast<ResourceNode*>(Iter->child);
-		std::vector<ResourceChild>::iterator ResIter = std::find_if(currNode->children.begin(), currNode->children.end(), std::bind2nd(std::mem_fun_ref(comp2), resid));
+		auto ResIter = std::find_if(
+				currNode->children.begin(),
+				currNode->children.end(),
+				std::bind(ResComparer<T>::comp(), std::placeholders::_1, resid)
+		);
 		if (ResIter != currNode->children.end())
 		{
 			return ERROR_DUPLICATE_ENTRY;
@@ -699,13 +713,11 @@ namespace PeLib
 	template<typename S, typename T>
 	int ResourceDirectory::removeResourceT(S restypeid, T resid)
 	{
-		typedef bool(ResourceChild::*CompFunc1)(S) const;
-		typedef bool(ResourceChild::*CompFunc2)(T) const;
-
-		CompFunc1 comp1 = ResComparer<S>::comp();
-		CompFunc2 comp2 = ResComparer<T>::comp();
-
-		std::vector<ResourceChild>::iterator Iter = std::find_if(m_rnRoot.children.begin(), m_rnRoot.children.end(), std::bind2nd(std::mem_fun_ref(comp1), restypeid));
+		auto Iter = std::find_if(
+				m_rnRoot.children.begin(),
+				m_rnRoot.children.end(),
+				std::bind(ResComparer<S>::comp(), std::placeholders::_1, restypeid)
+		);
 		if (Iter == m_rnRoot.children.end())
 		{
 			return ERROR_ENTRY_NOT_FOUND;
@@ -713,7 +725,11 @@ namespace PeLib
 		}
 
 		ResourceNode* currNode = static_cast<ResourceNode*>(Iter->child);
-		std::vector<ResourceChild>::iterator ResIter = std::find_if(currNode->children.begin(), currNode->children.end(), std::bind2nd(std::mem_fun_ref(comp2), resid));
+		auto ResIter = std::find_if(
+				currNode->children.begin(),
+				currNode->children.end(),
+				std::bind(ResComparer<T>::comp(), std::placeholders::_1, resid)
+		);
 		if (ResIter == currNode->children.end())
 		{
 			return ERROR_ENTRY_NOT_FOUND;

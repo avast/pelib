@@ -49,7 +49,11 @@ namespace PeLib
 	**/
 	int ExportDirectory::getFunctionIndex(const std::string& strFunctionName) const
 	{
-		std::vector<PELIB_EXP_FUNC_INFORMATION>::const_iterator Iter = std::find_if(m_ied.functions.begin(), m_ied.functions.end(), std::bind2nd(std::mem_fun_ref(&PELIB_EXP_FUNC_INFORMATION::equal), strFunctionName));
+		auto Iter = std::find_if(
+				m_ied.functions.begin(),
+				m_ied.functions.end(),
+				[&](const auto& i) { return i.equal(strFunctionName); }
+		);
 
 		if (Iter == m_ied.functions.end())
 		{

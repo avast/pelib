@@ -641,7 +641,12 @@ namespace PeLib
 		//                  An example for such a file is dbeng6.exe (made by Sybase).
 		//                  In this file each and every section has a VSize of 0 but it still runs.
 
-		std::vector<PELIB_IMAGE_SECTION_HEADER>::const_iterator ishLastSection = std::max_element(m_vIsh.begin(), m_vIsh.end(), std::mem_fun_ref(&PELIB_IMAGE_SECTION_HEADER::biggerVirtualAddress));
+		auto ishLastSection = std::max_element(
+				m_vIsh.begin(),
+				m_vIsh.end(),
+				[](const auto& i) { return i.biggerVirtualAddress(); }
+		);
+
 		if (ishLastSection->VirtualSize != 0) return ishLastSection->VirtualAddress + ishLastSection->VirtualSize;
 		return ishLastSection->VirtualAddress + std::max(ishLastSection->VirtualSize, ishLastSection->SizeOfRawData);
 	}
@@ -757,7 +762,11 @@ namespace PeLib
 	template<int x>
 	void PeHeaderT<x>::enlargeLastSection(unsigned int uiSize)
 	{
-		std::vector<PELIB_IMAGE_SECTION_HEADER>::iterator ishLastSection = std::max_element(m_vIsh.begin(), m_vIsh.end(), std::mem_fun_ref(&PELIB_IMAGE_SECTION_HEADER::biggerFileOffset));
+		auto ishLastSection = std::max_element(
+				m_vIsh.begin(),
+				m_vIsh.end(),
+				[](const auto& i) { return i.biggerFileOffset(); }
+		);
 		unsigned int uiRawDataSize = alignOffset(ishLastSection->SizeOfRawData + uiSize, getFileAlignment());
 
 		ishLastSection->SizeOfRawData = uiRawDataSize;

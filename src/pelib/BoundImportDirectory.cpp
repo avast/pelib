@@ -55,7 +55,11 @@ namespace PeLib
 	**/
 	int BoundImportDirectory::getModuleIndex(const std::string& strModuleName) const
 	{
-		std::vector<PELIB_IMAGE_BOUND_DIRECTORY>::const_iterator Iter = std::find_if(m_vIbd.begin(), m_vIbd.end(), std::bind2nd(std::mem_fun_ref(&PELIB_IMAGE_BOUND_DIRECTORY::equal), strModuleName));
+		auto Iter = std::find_if(
+				m_vIbd.begin(),
+				m_vIbd.end(),
+				[&](const auto& i) { return i.equal(strModuleName); }
+		);
 
 		if (Iter == m_vIbd.end())
 		{
@@ -266,7 +270,14 @@ namespace PeLib
 	**/
 	void BoundImportDirectory::removeBoundImport(const std::string& strModuleName)
 	{
-		m_vIbd.erase(std::remove_if(m_vIbd.begin(), m_vIbd.end(), std::bind2nd(std::mem_fun_ref(&PELIB_IMAGE_BOUND_DIRECTORY::equal), strModuleName)), m_vIbd.end());
+		m_vIbd.erase(
+			std::remove_if(
+				m_vIbd.begin(),
+				m_vIbd.end(),
+				[&](const auto& i) { return i.equal(strModuleName); }
+			),
+			m_vIbd.end()
+		);
 	}
 
 	/**
