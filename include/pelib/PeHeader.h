@@ -644,7 +644,7 @@ namespace PeLib
 		auto ishLastSection = std::max_element(
 				m_vIsh.begin(),
 				m_vIsh.end(),
-				[](const auto& i) { return i.biggerVirtualAddress(); }
+				[](const auto& i1, const auto& i2) { return i1.biggerVirtualAddress(i2); }
 		);
 
 		if (ishLastSection->VirtualSize != 0) return ishLastSection->VirtualAddress + ishLastSection->VirtualSize;
@@ -765,7 +765,7 @@ namespace PeLib
 		auto ishLastSection = std::max_element(
 				m_vIsh.begin(),
 				m_vIsh.end(),
-				[](const auto& i) { return i.biggerFileOffset(); }
+				[](const auto& i1, const auto& i2) { return i1.biggerFileOffset(i2); }
 		);
 		unsigned int uiRawDataSize = alignOffset(ishLastSection->SizeOfRawData + uiSize, getFileAlignment());
 
