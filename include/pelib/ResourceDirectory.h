@@ -48,6 +48,11 @@ namespace PeLib
 		  /// Used for sorting a node's children.
 		  bool operator<(const ResourceChild& rc) const; // EXPORT
 
+		  /// A comparison function for searching a resource element by its ID.
+		  bool hasEqual(dword id) const { return equalId(id); }
+		  /// A comparison function for searching a resource element by its name.
+		  bool hasEqual(const std::string& name) const { return equalName(name); }
+
 		  /// Returns the node's number of children.
 		  unsigned int getNumberOfChildren() const; // EXPORT
 		  /// Returns a child of this child.
@@ -263,56 +268,6 @@ namespace PeLib
 		  ResourceNode();
 		  /// Destructor
 		  virtual ~ResourceNode() override;
-	};
-
-	/// Auxiliary functor which is used to search through the resource tree.
-	/**
-	* Traits class for the template functions of ResourceDirectory.
-	* It's used to find out which function to use when searching for resource nodes or resource leafs
-	* in a node's children vector.
-	**/
-	template<typename T>
-	struct ResComparer
-	{
-		/// Pointer to a member function of ResourceChild
-		typedef bool(ResourceChild::*CompFunc)(T) const;
-
-		/// Return 0 for all unspecialized versions of ResComparer.
-		static CompFunc comp();
-	};
-
-	/// Auxiliary functor which is used to search through the resource tree.
-	/**
-	* ResComparer<dword> is used when a resource element is searched for by ID.
-	**/
-	template<>
-	struct ResComparer<dword>
-	{
-		/// Pointer to a member function of ResourceChild
-		typedef bool(ResourceChild::*CompFunc)(dword) const;
-
-		/// Return the address of the ResourceChild member function that compares the ids of resource elements.
-		static CompFunc comp()
-		{
-			return &ResourceChild::equalId;
-		}
-	};
-
-	/// Auxiliary functor which is used to search through the resource tree.
-	/**
-	* This specializd version of ResComparer is used when a resource element is searched for by name.
-	**/
-	template<>
-	struct ResComparer<std::string>
-	{
-		/// Pointer to a member function of ResourceChild
-		typedef bool(ResourceChild::*CompFunc)(std::string) const;
-
-		/// Return the address of the ResourceChild member function that compares the names of resource elements.
-		static CompFunc comp()
-		{
-			return &ResourceChild::equalName;
-		}
 	};
 
 	/// Unspecialized function that's used as base template for the specialized versions below.
@@ -605,7 +560,7 @@ namespace PeLib
 		auto Iter = std::find_if(
 				m_rnRoot.children.begin(),
 				m_rnRoot.children.end(),
-				std::bind(ResComparer<S>::comp(), std::placeholders::_1, restypeid)
+				[&](const auto& res) { return res.hasEqual(restypeid); }
 		);
 		if (Iter == m_rnRoot.children.end())
 		{
@@ -616,7 +571,7 @@ namespace PeLib
 		auto ResIter = std::find_if(
 				currNode->children.begin(),
 				currNode->children.end(),
-				std::bind(ResComparer<T>::comp(), std::placeholders::_1, resid)
+				[&](const auto& res) { return res.hasEqual(resid); }
 		);
 		if (ResIter == currNode->children.end())
 		{
@@ -639,7 +594,7 @@ namespace PeLib
 		auto Iter = std::find_if(
 				m_rnRoot.children.begin(),
 				m_rnRoot.children.end(),
-				std::bind(ResComparer<S>::comp(), std::placeholders::_1, restypeid)
+				[&](const auto& res) { return res.hasEqual(restypeid); }
 		);
 		if (Iter == m_rnRoot.children.end())
 		{
@@ -650,7 +605,7 @@ namespace PeLib
 		auto ResIter = std::find_if(
 				currNode->children.begin(),
 				currNode->children.end(),
-				std::bind(ResComparer<T>::comp(), std::placeholders::_1, resid)
+				[&](const auto& res) { return res.hasEqual(resid); }
 		);
 		if (ResIter == currNode->children.end())
 		{
@@ -672,7 +627,7 @@ namespace PeLib
 		auto Iter = std::find_if(
 				m_rnRoot.children.begin(),
 				m_rnRoot.children.end(),
-				std::bind(ResComparer<S>::comp(), std::placeholders::_1, restypeid)
+				[&](const auto& res) { return res.hasEqual(restypeid); }
 		);
 		if (Iter == m_rnRoot.children.end())
 		{
@@ -684,7 +639,7 @@ namespace PeLib
 		auto ResIter = std::find_if(
 				currNode->children.begin(),
 				currNode->children.end(),
-				std::bind(ResComparer<T>::comp(), std::placeholders::_1, resid)
+				[&](const auto& res) { return res.hasEqual(resid); }
 		);
 		if (ResIter != currNode->children.end())
 		{
@@ -716,7 +671,7 @@ namespace PeLib
 		auto Iter = std::find_if(
 				m_rnRoot.children.begin(),
 				m_rnRoot.children.end(),
-				std::bind(ResComparer<S>::comp(), std::placeholders::_1, restypeid)
+				[&](const auto& res) { return res.hasEqual(restypeid); }
 		);
 		if (Iter == m_rnRoot.children.end())
 		{
@@ -728,7 +683,7 @@ namespace PeLib
 		auto ResIter = std::find_if(
 				currNode->children.begin(),
 				currNode->children.end(),
-				std::bind(ResComparer<T>::comp(), std::placeholders::_1, resid)
+				[&](const auto& res) { return res.hasEqual(resid); }
 		);
 		if (ResIter == currNode->children.end())
 		{
