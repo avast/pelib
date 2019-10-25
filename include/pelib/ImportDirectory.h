@@ -63,11 +63,19 @@ namespace PeLib
 			{
 				do
 				{
-					FileIter = std::find_if(FileIter, EndIter, std::bind2nd(std::mem_fun_ref(&PELIB_IMAGE_IMPORT_DIRECTORY<bits>::operator==), strFilename));
+					FileIter = std::find_if(
+							FileIter,
+							EndIter,
+							[&](const auto& i) { return i == strFilename; }
+					);
 
 					if (FileIter != EndIter)
 					{
-						typename std::vector<PELIB_THUNK_DATA<bits> >::const_iterator Iter = std::find_if(FileIter->originalfirstthunk.begin(), FileIter->originalfirstthunk.end(), std::bind2nd(std::mem_fun_ref(comp), value));
+						auto Iter = std::find_if(
+								FileIter->originalfirstthunk.begin(),
+								FileIter->originalfirstthunk.end(),
+								std::bind(comp, std::placeholders::_1, value)
+						);
 						if (Iter != FileIter->originalfirstthunk.end())
 						{
 							return true;
@@ -207,7 +215,11 @@ namespace PeLib
 		}
 
 	 	// Find the imported file.
-		ImpDirFileIterator FileIter = std::find_if(m_vNewiid.begin(), m_vNewiid.end(), std::bind2nd(std::mem_fun_ref(&PELIB_IMAGE_IMPORT_DIRECTORY<bits>::operator==), strFilename));
+		ImpDirFileIterator FileIter = std::find_if(
+				m_vNewiid.begin(),
+				m_vNewiid.end(),
+				[&](const auto& i) { return i == strFilename; }
+		);
 
 		PELIB_IMAGE_IMPORT_DIRECTORY<bits> iid;
 		PELIB_THUNK_DATA<bits> td;
@@ -243,7 +255,11 @@ namespace PeLib
 		}
 
 	 	// Find the imported file.
-		ImpDirFileIterator FileIter = std::find_if(m_vNewiid.begin(), m_vNewiid.end(), std::bind2nd(std::mem_fun_ref(&PELIB_IMAGE_IMPORT_DIRECTORY<bits>::operator==), strFilename));
+		ImpDirFileIterator FileIter = std::find_if(
+				m_vNewiid.begin(),
+				m_vNewiid.end(),
+				[&](const auto& i) { return i == strFilename; }
+		);
 
 		PELIB_IMAGE_IMPORT_DIRECTORY<bits> iid;
 		PELIB_THUNK_DATA<bits> td;
@@ -285,7 +301,11 @@ namespace PeLib
 			 currDir = &m_vNewiid;
 		}
 
-		ConstImpDirFileIterator FileIter = std::find_if(currDir->begin(), currDir->end(), std::bind2nd(std::mem_fun_ref(&PELIB_IMAGE_IMPORT_DIRECTORY<bits>::operator==), strFilename));
+		ConstImpDirFileIterator FileIter = std::find_if(
+				currDir->begin(),
+				currDir->end(),
+				[&](const auto& i) { return i == strFilename; }
+		);
 
 		if (FileIter != currDir->end())
 		{
@@ -934,7 +954,14 @@ namespace PeLib
 	{
 		unsigned int oldSize = static_cast<unsigned int>(m_vNewiid.size());
 
-		m_vNewiid.erase(std::remove_if(m_vNewiid.begin(), m_vNewiid.end(), std::bind2nd(std::mem_fun_ref(&PELIB_IMAGE_IMPORT_DIRECTORY<bits>::operator==), strFilename)), m_vNewiid.end());
+		m_vNewiid.erase(
+			std::remove_if(
+				m_vNewiid.begin(),
+				m_vNewiid.end(),
+				[&](const auto& i) { return i == strFilename; }
+			),
+			m_vNewiid.end()
+		);
 
 		return oldSize == m_vNewiid.size() ? 1 : 0;
 	}
@@ -956,8 +983,14 @@ namespace PeLib
 			if (isEqualNc(viPos->name, strFilename))
 			{
 				unsigned int oldSize = static_cast<unsigned int>(viPos->originalfirstthunk.size());
-				viPos->originalfirstthunk.erase(std::remove_if(viPos->originalfirstthunk.begin(), viPos->originalfirstthunk.end(), std::bind2nd(std::mem_fun_ref(&PELIB_THUNK_DATA<bits>::equalFunctionName), strFuncname)), viPos->originalfirstthunk.end());
-				//viPos->originalfirstthunk.erase(std::remove_if(viPos->originalfirstthunk.begin(), viPos->originalfirstthunk.end(), std::bind2nd(CompPolicy<PELIB_THUNK_DATA, std::string>(), strFuncname)));
+				viPos->originalfirstthunk.erase(
+					std::remove_if(
+						viPos->originalfirstthunk.begin(),
+						viPos->originalfirstthunk.end(),
+						[&](const auto& i) { return i.equalFunctionName(strFuncname); }
+					),
+					viPos->originalfirstthunk.end()
+				);
 				if (viPos->originalfirstthunk.size() != oldSize) notFound = 0;
 			}
 			++viPos;
@@ -982,7 +1015,14 @@ namespace PeLib
 			if (isEqualNc(viPos->name, strFilename))
 			{
 				unsigned int oldSize = static_cast<unsigned int>(viPos->originalfirstthunk.size());
-				viPos->originalfirstthunk.erase(std::remove_if(viPos->originalfirstthunk.begin(), viPos->originalfirstthunk.end(), std::bind2nd(std::mem_fun_ref(&PELIB_THUNK_DATA<bits>::equalHint), wHint)), viPos->originalfirstthunk.end());
+				viPos->originalfirstthunk.erase(
+					std::remove_if(
+						viPos->originalfirstthunk.begin(),
+						viPos->originalfirstthunk.end(),
+						[&](const auto& i) { return i.equalHint(wHint); }
+					),
+					viPos->originalfirstthunk.end()
+				);
 				if (viPos->originalfirstthunk.size() != oldSize) notFound = 0;
 			}
 			++viPos;
