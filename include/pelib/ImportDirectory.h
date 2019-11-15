@@ -557,6 +557,9 @@ namespace PeLib
 		unsigned int uiDescCounter = 0;
 		unsigned int uiDescOffset = uiOffset;
 
+		// For tracking unique imported DLLs
+		std::unordered_map<std::string, int> uniqueDllList;
+
 		// Read and store all descriptors
 		for (;;)
 		{
@@ -585,8 +588,8 @@ namespace PeLib
 			if (iidCurr.impdesc.Name == 0 || iidCurr.impdesc.FirstThunk == 0)
 				break;
 
-			// We ignore names and thunks that go beyond the file
-			if (iidCurr.impdesc.Name > SizeOfImage)
+			// We ignore import names that go beyond the file
+			if (iidCurr.impdesc.Name > SizeOfImage || !peHeader.isValidRva(iidCurr.impdesc.Name))
 			{
 				setLoaderError(LDR_ERROR_IMPDIR_NAME_RVA_INVALID);
 				break;
@@ -598,14 +601,31 @@ namespace PeLib
 				break;
 			}
 
+			// Retrieve the import name string from the image
+			getStringFromFileOffset(inStream_w, iidCurr.name, peHeader.rvaToOffset(iidCurr.impdesc.Name), IMPORT_LIBRARY_MAX_LENGTH);
+
 			// Ignore too large import directories
-			// Sample: CCE461B6EB23728BA3B8A97B9BE84C0FB9175DB31B9949E64144198AB3F702CE
-			// Number of import descriptors: 0x6253
-			if (vOldIidCurr.size() > PELIB_MAX_IMPORT_DESCRIPTORS)
+			// Sample: CCE461B6EB23728BA3B8A97B9BE84C0FB9175DB31B9949E64144198AB3F702CE, # of impdesc 0x6253 (invalid)
+			// Sample: 395e64e7071d35cb85d8312095aede5166db731aac44920679eee5c7637cc58c, # of impdesc 0x0131 (valid)
+			if (uniqueDllList.find(iidCurr.name) == uniqueDllList.end())
 			{
-				setLoaderError(LDR_ERROR_IMPDIR_COUNT_EXCEEDED);
-				break;
+				// Remember that the DLL was imported before
+				uniqueDllList.emplace(iidCurr.name, 1);
+
+				// Check the total number of imported DLLs
+				if(uniqueDllList.size() > PELIB_MAX_IMPORT_DLLS)
+				{
+					setLoaderError(LDR_ERROR_IMPDIR_COUNT_EXCEEDED);
+					break;
+				}
 			}
+
+			// Mark the range occupied by name
+			// +1 for null terminator
+			// If the end address is even, we need to align it by 2, so next name always starts at even address
+			m_occupiedAddresses.emplace_back(iidCurr.impdesc.Name, iidCurr.impdesc.Name + iidCurr.name.length() + 1);
+			if (!(m_occupiedAddresses.back().second & 1))
+				m_occupiedAddresses.back().second += 1;
 
 			// Push the import descriptor into the vector
 			vOldIidCurr.push_back(iidCurr);
@@ -613,30 +633,6 @@ namespace PeLib
 
 		// Space occupied by import descriptors
 		m_occupiedAddresses.emplace_back(peHeader.getIddImportRva(), peHeader.getIddImportRva() + (uiDescOffset - uiOffset - 1));
-
-		// Name
-		for (unsigned int i=0;i<vOldIidCurr.size();i++)
-		{
-			if (!peHeader.isValidRva(vOldIidCurr[i].impdesc.Name))
-			{
-				setLoaderError(LDR_ERROR_IMPDIR_NAME_RVA_INVALID);
-				return ERROR_INVALID_FILE;
-			}
-
-			getStringFromFileOffset(
-					inStream_w,
-					vOldIidCurr[i].name,
-					static_cast<unsigned int>(peHeader.rvaToOffset(vOldIidCurr[i].impdesc.Name)),
-					IMPORT_LIBRARY_MAX_LENGTH);
-
-			// Space occupied by names
-			// +1 for null terminator
-			// If the end address is even, we need to align it by 2, so next name always starts at even address
-			m_occupiedAddresses.emplace_back(static_cast<unsigned int>(vOldIidCurr[i].impdesc.Name),
-										     static_cast<unsigned int>(vOldIidCurr[i].impdesc.Name + vOldIidCurr[i].name.length() + 1));
-			if (!(m_occupiedAddresses.back().second & 1))
-				m_occupiedAddresses.back().second += 1;
-		}
 
 		// OriginalFirstThunk - ILT
 		for (unsigned int i=0;i<vOldIidCurr.size();i++)

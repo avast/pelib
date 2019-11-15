@@ -15,6 +15,7 @@
 
 #include <numeric>
 #include <limits>
+#include <unordered_map>
 
 #ifdef _MSC_VER						// Reduces number of warnings under MS Visual Studio from ~100000 to zero
 #pragma warning(disable:4267)		// C4267: 'initializing': conversion from 'size_t' to '_Ty2', possible loss of data
@@ -207,7 +208,7 @@ namespace PeLib
 
 	const dword PELIB_MM_SIZE_OF_LARGEST_IMAGE = 0x77000000;
 
-	const dword PELIB_MAX_IMPORT_DESCRIPTORS = 0x100;           // Maximum number of import descriptors we support
+	const dword PELIB_MAX_IMPORT_DLLS        = 0x100;           // Maximum number of imported DLLs we consider OK
 	const dword PELIB_MAX_IMPORTED_FUNCTIONS = 0x1000;          // Maximum number of exported functions (per DLL) that we support
 	const dword PELIB_MAX_EXPORTED_FUNCTIONS = 0x1000;          // Maximum number of exported functions that we support
 
