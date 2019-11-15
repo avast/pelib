@@ -590,10 +590,10 @@ namespace PeLib
 			if (uniqueDllList.find(iidCurr.name) == uniqueDllList.end())
 			{
 				// Remember that the DLL was imported before
-				uniqueDllList.insert(std::make_pair(iidCurr.name, 1));
+				uniqueDllList.emplace(iidCurr.name, 1);
 
 				// Check the total number of imported DLLs
-				if(uniqueDllList.size() >= PELIB_MAX_IMPORT_DLLS)
+				if(uniqueDllList.size() > PELIB_MAX_IMPORT_DLLS)
 				{
 					setLoaderError(LDR_ERROR_IMPDIR_COUNT_EXCEEDED);
 					break;
