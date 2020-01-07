@@ -80,22 +80,6 @@ namespace PeLib
 		return size2;
 	}
 
-	void RelocationsDirectory::rebuild(std::vector<byte>& vBuffer) const
-	{
-		OutputBuffer obBuffer(vBuffer);
-
-		for (unsigned int i=0;i<m_vRelocations.size();i++)
-		{
-			obBuffer << m_vRelocations[i].ibrRelocation.VirtualAddress;
-			obBuffer << m_vRelocations[i].ibrRelocation.SizeOfBlock;
-
-			for (unsigned int j=0;j<m_vRelocations[i].vRelocData.size();j++)
-			{
-				obBuffer << m_vRelocations[i].vRelocData[j];
-			}
-		}
-	}
-
 	unsigned int RelocationsDirectory::calcNumberOfRelocations() const
 	{
 		return static_cast<unsigned int>(m_vRelocations.size());

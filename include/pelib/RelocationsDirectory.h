@@ -38,8 +38,6 @@ namespace PeLib
 
 		  /// Read a file's relocations directory.
 		  int read(const unsigned char* buffer, unsigned int buffersize); // EXPORT
-		  /// Rebuilds the relocations directory.
-		  void rebuild(std::vector<byte>& vBuffer) const; // EXPORT
 		  /// Returns the size of the relocations directory.
 		  unsigned int size() const; // EXPORT
 		  /// Writes the relocations directory to a file.
