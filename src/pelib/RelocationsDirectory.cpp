@@ -142,3 +142,4 @@ namespace PeLib
 	{
 		m_vRelocations[relocindex].vRelocData.erase(m_vRelocations[relocindex].vRelocData.begin() + dataindex);
 	}
+}
