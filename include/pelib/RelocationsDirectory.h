@@ -40,8 +40,6 @@ namespace PeLib
 		  int read(const unsigned char* buffer, unsigned int buffersize); // EXPORT
 		  /// Returns the size of the relocations directory.
 		  unsigned int size() const; // EXPORT
-		  /// Writes the relocations directory to a file.
-		  int write(const std::string& strFilename, unsigned int dwOffset) const; // EXPORT
 
 		  /// Returns the VA of a relocation.
 		  dword getVirtualAddress(unsigned int ulRelocation) const; // EXPORT

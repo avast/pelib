@@ -142,36 +142,3 @@ namespace PeLib
 	{
 		m_vRelocations[relocindex].vRelocData.erase(m_vRelocations[relocindex].vRelocData.begin() + dataindex);
 	}
-
-	int RelocationsDirectory::write(const std::string& strFilename, unsigned int uiOffset) const
-	{
-		std::fstream ofFile(strFilename.c_str(), std::ios_base::in);
-
-		if (!ofFile)
-		{
-			ofFile.clear();
-			ofFile.open(strFilename.c_str(), std::ios_base::out | std::ios_base::binary);
-		}
-		else
-		{
-			ofFile.close();
-			ofFile.open(strFilename.c_str(), std::ios_base::in | std::ios_base::out | std::ios_base::binary);
-		}
-
-		if (!ofFile)
-		{
-			return ERROR_OPENING_FILE;
-		}
-
-		ofFile.seekp(uiOffset, std::ios::beg);
-
-		std::vector<unsigned char> vBuffer;
-		rebuild(vBuffer);
-
-		ofFile.write(reinterpret_cast<const char*>(vBuffer.data()), static_cast<std::streamsize>(vBuffer.size()));
-
-		ofFile.close();
-
-		return ERROR_NONE;
-	}
-}
