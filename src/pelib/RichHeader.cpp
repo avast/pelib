@@ -7,6 +7,7 @@
 #include <cstring>
 #include <sstream>
 #include <iomanip>
+#include <array>
 
 #include "pelib/PeLibInc.h"
 #include "pelib/RichHeader.h"
@@ -16,277 +17,277 @@ namespace PeLib
 	// Map of richHeaderProductId -> ProductName
 	const std::vector<std::string> productNames =
 	{
-		"Import (old)",
-		"Import",
-		"Linker510",
-		"Cvtomf510",
-		"Linker600",
-		"Cvtomf600",
-		"Cvtres500",
-		"Utc11_Basic",
-		"Utc11_C",
-		"Utc12_Basic",
-		"Utc12_C",
-		"Utc12_CPP",
-		"AliasObj60",
-		"VisualBasic60",
-		"Masm613",
-		"Masm710",
-		"Linker511",
-		"Cvtomf511",
-		"Masm614",
-		"Linker512",
-		"Cvtomf512",
-		"Utc12_C_Std",
-		"Utc12_CPP_Std",
-		"Utc12_C_Book",
-		"Utc12_CPP_Book",
-		"Implib700",
-		"Cvtomf700",
-		"Utc13_Basic",
-		"Utc13_C",
-		"Utc13_CPP",
-		"Linker610",
-		"Cvtomf610",
-		"Linker601",
-		"Cvtomf601",
-		"Utc12_1_Basic",
-		"Utc12_1_C",
-		"Utc12_1_CPP",
-		"Linker620",
-		"Cvtomf620",
-		"AliasObj70",
-		"Linker621",
-		"Cvtomf621",
-		"Masm615",
-		"Utc13_LTCG_C",
-		"Utc13_LTCG_CPP",
-		"Masm620",
-		"ILAsm100",
-		"Utc12_2_Basic",
-		"Utc12_2_C",
-		"Utc12_2_CPP",
-		"Utc12_2_C_Std",
-		"Utc12_2_CPP_Std",
-		"Utc12_2_C_Book",
-		"Utc12_2_CPP_Book",
-		"Implib622",
-		"Cvtomf622",
-		"Cvtres501",
-		"Utc13_C_Std",
-		"Utc13_CPP_Std",
-		"Cvtpgd1300",
-		"Linker622",
-		"Linker700",
-		"Export622",
-		"Export700",
-		"Masm700",
-		"Utc13_POGO_I_C",
-		"Utc13_POGO_I_CPP",
-		"Utc13_POGO_O_C",
-		"Utc13_POGO_O_CPP",
-		"Cvtres700",
-		"Cvtres710p",
-		"Linker710p",
-		"Cvtomf710p",
-		"Export710p",
-		"Implib710p",
-		"Masm710p",
-		"Utc1310p_C",
-		"Utc1310p_CPP",
-		"Utc1310p_C_Std",
-		"Utc1310p_CPP_Std",
-		"Utc1310p_LTCG_C",
-		"Utc1310p_LTCG_CPP",
-		"Utc1310p_POGO_I_C",
-		"Utc1310p_POGO_I_CPP",
-		"Utc1310p_POGO_O_C",
-		"Utc1310p_POGO_O_CPP",
-		"Linker624",
-		"Cvtomf624",
-		"Export624",
-		"Implib624",
-		"Linker710",
-		"Cvtomf710",
-		"Export710",
-		"Implib710",
-		"Cvtres710",
-		"Utc1310_C",
-		"Utc1310_CPP",
-		"Utc1310_C_Std",
-		"Utc1310_CPP_Std",
-		"Utc1310_LTCG_C",
-		"Utc1310_LTCG_CPP",
-		"Utc1310_POGO_I_C",
-		"Utc1310_POGO_I_CPP",
-		"Utc1310_POGO_O_C",
-		"Utc1310_POGO_O_CPP",
-		"AliasObj710",
-		"AliasObj710p",
-		"Cvtpgd1310",
-		"Cvtpgd1310p",
-		"Utc1400_C",
-		"Utc1400_CPP",
-		"Utc1400_C_Std",
-		"Utc1400_CPP_Std",
-		"Utc1400_LTCG_C",
-		"Utc1400_LTCG_CPP",
-		"Utc1400_POGO_I_C",
-		"Utc1400_POGO_I_CPP",
-		"Utc1400_POGO_O_C",
-		"Utc1400_POGO_O_CPP",
-		"Cvtpgd1400",
-		"Linker800",
-		"Cvtomf800",
-		"Export800",
-		"Implib800",
-		"Cvtres800",
-		"Masm800",
-		"AliasObj800",
-		"PhoenixPrerelease",
-		"Utc1400_CVTCIL_C",
-		"Utc1400_CVTCIL_CPP",
-		"Utc1400_LTCG_MSIL",
-		"Utc1500_C",
-		"Utc1500_CPP",
-		"Utc1500_C_Std",
-		"Utc1500_CPP_Std",
-		"Utc1500_CVTCIL_C",
-		"Utc1500_CVTCIL_CPP",
-		"Utc1500_LTCG_C",
-		"Utc1500_LTCG_CPP",
-		"Utc1500_LTCG_MSIL",
-		"Utc1500_POGO_I_C",
-		"Utc1500_POGO_I_CPP",
-		"Utc1500_POGO_O_C",
-		"Utc1500_POGO_O_CPP",
-		"Cvtpgd1500",
-		"Linker900",
-		"Export900",
-		"Implib900",
-		"Cvtres900",
-		"Masm900",
-		"AliasObj900",
-		"Resource",
-		"AliasObj1000",
-		"Cvtpgd1600",
-		"Cvtres1000",
-		"Export1000",
-		"Implib1000",
-		"Linker1000",
-		"Masm1000",
-		"Phx1600_C",
-		"Phx1600_CPP",
-		"Phx1600_CVTCIL_C",
-		"Phx1600_CVTCIL_CPP",
-		"Phx1600_LTCG_C",
-		"Phx1600_LTCG_CPP",
-		"Phx1600_LTCG_MSIL",
-		"Phx1600_POGO_I_C",
-		"Phx1600_POGO_I_CPP",
-		"Phx1600_POGO_O_C",
-		"Phx1600_POGO_O_CPP",
-		"Utc1600_C",
-		"Utc1600_CPP",
-		"Utc1600_CVTCIL_C",
-		"Utc1600_CVTCIL_CPP",
-		"Utc1600_LTCG_C",
-		"Utc1600_LTCG_CPP",
-		"Utc1600_LTCG_MSIL",
-		"Utc1600_POGO_I_C",
-		"Utc1600_POGO_I_CPP",
-		"Utc1600_POGO_O_C",
-		"Utc1600_POGO_O_CPP",
-		"AliasObj1010",
-		"Cvtpgd1610",
-		"Cvtres1010",
-		"Export1010",
-		"Implib1010",
-		"Linker1010",
-		"Masm1010",
-		"Utc1610_C",
-		"Utc1610_CPP",
-		"Utc1610_CVTCIL_C",
-		"Utc1610_CVTCIL_CPP",
-		"Utc1610_LTCG_C",
-		"Utc1610_LTCG_CPP",
-		"Utc1610_LTCG_MSIL",
-		"Utc1610_POGO_I_C",
-		"Utc1610_POGO_I_CPP",
-		"Utc1610_POGO_O_C",
-		"Utc1610_POGO_O_CPP",
-		"AliasObj1100",
-		"Cvtpgd1700",
-		"Cvtres1100",
-		"Export1100",
-		"Implib1100",
-		"Linker1100",
-		"Masm1100",
-		"Utc1700_C",
-		"Utc1700_CPP",
-		"Utc1700_CVTCIL_C",
-		"Utc1700_CVTCIL_CPP",
-		"Utc1700_LTCG_C",
-		"Utc1700_LTCG_CPP",
-		"Utc1700_LTCG_MSIL",
-		"Utc1700_POGO_I_C",
-		"Utc1700_POGO_I_CPP",
-		"Utc1700_POGO_O_C",
-		"Utc1700_POGO_O_CPP",
-		"AliasObj1200",
-		"Cvtpgd1800",
-		"Cvtres1200",
-		"Export1200",
-		"Implib1200",
-		"Linker1200",
-		"Masm1200",
-		"Utc1800_C",
-		"Utc1800_CPP",
-		"Utc1800_CVTCIL_C",
-		"Utc1800_CVTCIL_CPP",
-		"Utc1800_LTCG_C",
-		"Utc1800_LTCG_CPP",
-		"Utc1800_LTCG_MSIL",
-		"Utc1800_POGO_I_C",
-		"Utc1800_POGO_I_CPP",
-		"Utc1800_POGO_O_C",
-		"Utc1800_POGO_O_CPP",
-		"AliasObj1210",
-		"Cvtpgd1810",
-		"Cvtres1210",
-		"Export1210",
-		"Implib1210",
-		"Linker1210",
-		"Masm1210",
-		"Utc1810_C",
-		"Utc1810_CPP",
-		"Utc1810_CVTCIL_C",
-		"Utc1810_CVTCIL_CPP",
-		"Utc1810_LTCG_C",
-		"Utc1810_LTCG_CPP",
-		"Utc1810_LTCG_MSIL",
-		"Utc1810_POGO_I_C",
-		"Utc1810_POGO_I_CPP",
-		"Utc1810_POGO_O_C",
-		"Utc1810_POGO_O_CPP",
-		"AliasObj1400",
-		"Cvtpgd1900",
-		"Cvtres1400",
-		"Export1400",
-		"Implib1400",
-		"Linker1400",
-		"Masm1400",
-		"Utc1900_C",
-		"Utc1900_CPP",
-		"Utc1900_CVTCIL_C",
-		"Utc1900_CVTCIL_CPP",
-		"Utc1900_LTCG_C",
-		"Utc1900_LTCG_CPP",
-		"Utc1900_LTCG_MSIL",
-		"Utc1900_POGO_I_C",
-		"Utc1900_POGO_I_CPP",
-		"Utc1900_POGO_O_C",
-		"Utc1900_POGO_O_CPP"
+		"Import        (old)",      // 0x00
+		"Import",                   // 0x01
+		"Linker510",                // 0x02
+		"Cvtomf510",                // 0x03
+		"Linker600",                // 0x04
+		"Cvtomf600",                // 0x05
+		"Cvtres500",                // 0x06
+		"Utc11_Basic",              // 0x07
+		"Utc11_C",                  // 0x08
+		"Utc12_Basic",              // 0x09
+		"Utc12_C",                  // 0x0A
+		"Utc12_CPP",                // 0x0B
+		"AliasObj60",               // 0x0C
+		"VisualBasic60",            // 0x0D
+		"Masm613",                  // 0x0E
+		"Masm710",                  // 0x0F
+		"Linker511",                // 0x10
+		"Cvtomf511",                // 0x11
+		"Masm614",                  // 0x12
+		"Linker512",                // 0x13
+		"Cvtomf512",                // 0x14
+		"Utc12_C_Std",              // 0x15
+		"Utc12_CPP_Std",            // 0x16
+		"Utc12_C_Book",             // 0x17
+		"Utc12_CPP_Book",           // 0x18
+		"Implib700",                // 0x19
+		"Cvtomf700",                // 0x1A
+		"Utc13_Basic",              // 0x1B
+		"Utc13_C",                  // 0x1C
+		"Utc13_CPP",                // 0x1D
+		"Linker610",                // 0x1E
+		"Cvtomf610",                // 0x1F
+		"Linker601",                // 0x20
+		"Cvtomf601",                // 0x21
+		"Utc12_1_Basic",            // 0x22
+		"Utc12_1_C",                // 0x23
+		"Utc12_1_CPP",              // 0x24
+		"Linker620",                // 0x25
+		"Cvtomf620",                // 0x26
+		"AliasObj70",               // 0x27
+		"Linker621",                // 0x28
+		"Cvtomf621",                // 0x29
+		"Masm615",                  // 0x2A
+		"Utc13_LTCG_C",             // 0x2B
+		"Utc13_LTCG_CPP",           // 0x2C
+		"Masm620",                  // 0x2D
+		"ILAsm100",                 // 0x2E
+		"Utc12_2_Basic",            // 0x2F
+		"Utc12_2_C",                // 0x30
+		"Utc12_2_CPP",              // 0x31
+		"Utc12_2_C_Std",            // 0x32
+		"Utc12_2_CPP_Std",          // 0x33
+		"Utc12_2_C_Book",           // 0x34
+		"Utc12_2_CPP_Book",         // 0x35
+		"Implib622",                // 0x36
+		"Cvtomf622",                // 0x37
+		"Cvtres501",                // 0x38
+		"Utc13_C_Std",              // 0x39
+		"Utc13_CPP_Std",            // 0x3A
+		"Cvtpgd1300",               // 0x3B
+		"Linker622",                // 0x3C
+		"Linker700",                // 0x3D
+		"Export622",                // 0x3E
+		"Export700",                // 0x3F
+		"Masm700",                  // 0x40
+		"Utc13_POGO_I_C",           // 0x41
+		"Utc13_POGO_I_CPP",         // 0x42
+		"Utc13_POGO_O_C",           // 0x43
+		"Utc13_POGO_O_CPP",         // 0x44
+		"Cvtres700",                // 0x45
+		"Cvtres710p",               // 0x46
+		"Linker710p",               // 0x47
+		"Cvtomf710p",               // 0x48
+		"Export710p",               // 0x49
+		"Implib710p",               // 0x4A
+		"Masm710p",                 // 0x4B
+		"Utc1310p_C",               // 0x4C
+		"Utc1310p_CPP",             // 0x4D
+		"Utc1310p_C_Std",           // 0x4E
+		"Utc1310p_CPP_Std",         // 0x4F
+		"Utc1310p_LTCG_C",          // 0x50
+		"Utc1310p_LTCG_CPP",        // 0x51
+		"Utc1310p_POGO_I_C",        // 0x52
+		"Utc1310p_POGO_I_CPP",      // 0x53
+		"Utc1310p_POGO_O_C",        // 0x54
+		"Utc1310p_POGO_O_CPP",      // 0x55
+		"Linker624",                // 0x56
+		"Cvtomf624",                // 0x57
+		"Export624",                // 0x58
+		"Implib624",                // 0x59
+		"Linker710",                // 0x5A
+		"Cvtomf710",                // 0x5B
+		"Export710",                // 0x5C
+		"Implib710",                // 0x5D
+		"Cvtres710",                // 0x5E
+		"Utc1310_C",                // 0x5F
+		"Utc1310_CPP",              // 0x60
+		"Utc1310_C_Std",            // 0x61
+		"Utc1310_CPP_Std",          // 0x62
+		"Utc1310_LTCG_C",           // 0x63
+		"Utc1310_LTCG_CPP",         // 0x64
+		"Utc1310_POGO_I_C",         // 0x65
+		"Utc1310_POGO_I_CPP",       // 0x66
+		"Utc1310_POGO_O_C",         // 0x67
+		"Utc1310_POGO_O_CPP",       // 0x68
+		"AliasObj710",              // 0x69
+		"AliasObj710p",             // 0x6A
+		"Cvtpgd1310",               // 0x6B
+		"Cvtpgd1310p",              // 0x6C
+		"Utc1400_C",                // 0x6D
+		"Utc1400_CPP",              // 0x6E
+		"Utc1400_C_Std",            // 0x6F
+		"Utc1400_CPP_Std",          // 0x70
+		"Utc1400_LTCG_C",           // 0x71
+		"Utc1400_LTCG_CPP",         // 0x72
+		"Utc1400_POGO_I_C",         // 0x73
+		"Utc1400_POGO_I_CPP",       // 0x74
+		"Utc1400_POGO_O_C",         // 0x75
+		"Utc1400_POGO_O_CPP",       // 0x76
+		"Cvtpgd1400",               // 0x77
+		"Linker800",                // 0x78
+		"Cvtomf800",                // 0x79
+		"Export800",                // 0x7A
+		"Implib800",                // 0x7B
+		"Cvtres800",                // 0x7C
+		"Masm800",                  // 0x7D
+		"AliasObj800",              // 0x7E
+		"PhoenixPrerelease",        // 0x7F
+		"Utc1400_CVTCIL_C",         // 0x80
+		"Utc1400_CVTCIL_CPP",       // 0x81
+		"Utc1400_LTCG_MSIL",        // 0x82
+		"Utc1500_C",                // 0x83
+		"Utc1500_CPP",              // 0x84
+		"Utc1500_C_Std",            // 0x85
+		"Utc1500_CPP_Std",          // 0x86
+		"Utc1500_CVTCIL_C",         // 0x87
+		"Utc1500_CVTCIL_CPP",       // 0x88
+		"Utc1500_LTCG_C",           // 0x89
+		"Utc1500_LTCG_CPP",         // 0x8A
+		"Utc1500_LTCG_MSIL",        // 0x8B
+		"Utc1500_POGO_I_C",         // 0x8C
+		"Utc1500_POGO_I_CPP",       // 0x8D
+		"Utc1500_POGO_O_C",         // 0x8E
+		"Utc1500_POGO_O_CPP",       // 0x8F
+		"Cvtpgd1500",               // 0x90
+		"Linker900",                // 0x91
+		"Export900",                // 0x92
+		"Implib900",                // 0x93
+		"Cvtres900",                // 0x94
+		"Masm900",                  // 0x95
+		"AliasObj900",              // 0x96
+		"Resource",                 // 0x97
+		"AliasObj1000",             // 0x98
+		"Cvtpgd1600",               // 0x99
+		"Cvtres1000",               // 0x9A
+		"Export1000",               // 0x9B
+		"Implib1000",               // 0x9C
+		"Linker1000",               // 0x9D
+		"Masm1000",                 // 0x9E
+		"Phx1600_C",                // 0x9F
+		"Phx1600_CPP",              // 0xA0
+		"Phx1600_CVTCIL_C",         // 0xA1
+		"Phx1600_CVTCIL_CPP",       // 0xA2
+		"Phx1600_LTCG_C",           // 0xA3
+		"Phx1600_LTCG_CPP",         // 0xA4
+		"Phx1600_LTCG_MSIL",        // 0xA5
+		"Phx1600_POGO_I_C",         // 0xA6
+		"Phx1600_POGO_I_CPP",       // 0xA7
+		"Phx1600_POGO_O_C",         // 0xA8
+		"Phx1600_POGO_O_CPP",       // 0xA9
+		"Utc1600_C",                // 0xAA
+		"Utc1600_CPP",              // 0xAB
+		"Utc1600_CVTCIL_C",         // 0xAC
+		"Utc1600_CVTCIL_CPP",       // 0xAD
+		"Utc1600_LTCG_C",           // 0xAE
+		"Utc1600_LTCG_CPP",         // 0xAF
+		"Utc1600_LTCG_MSIL",        // 0xB0
+		"Utc1600_POGO_I_C",         // 0xB1
+		"Utc1600_POGO_I_CPP",       // 0xB2
+		"Utc1600_POGO_O_C",         // 0xB3
+		"Utc1600_POGO_O_CPP",       // 0xB4
+		"AliasObj1010",             // 0xB5
+		"Cvtpgd1610",               // 0xB6
+		"Cvtres1010",               // 0xB7
+		"Export1010",               // 0xB8
+		"Implib1010",               // 0xB9
+		"Linker1010",               // 0xBA
+		"Masm1010",                 // 0xBB
+		"Utc1610_C",                // 0xBC
+		"Utc1610_CPP",              // 0xBD
+		"Utc1610_CVTCIL_C",         // 0xBE
+		"Utc1610_CVTCIL_CPP",       // 0xBF
+		"Utc1610_LTCG_C",           // 0xC0
+		"Utc1610_LTCG_CPP",         // 0xC1
+		"Utc1610_LTCG_MSIL",        // 0xC2
+		"Utc1610_POGO_I_C",         // 0xC3
+		"Utc1610_POGO_I_CPP",       // 0xC4
+		"Utc1610_POGO_O_C",         // 0xC5
+		"Utc1610_POGO_O_CPP",       // 0xC6
+		"AliasObj1100",             // 0xC7
+		"Cvtpgd1700",               // 0xC8
+		"Cvtres1100",               // 0xC9
+		"Export1100",               // 0xCA
+		"Implib1100",               // 0xCB
+		"Linker1100",               // 0xCC
+		"Masm1100",                 // 0xCD
+		"Utc1700_C",                // 0xCE
+		"Utc1700_CPP",              // 0xCF
+		"Utc1700_CVTCIL_C",         // 0xD0
+		"Utc1700_CVTCIL_CPP",       // 0xD1
+		"Utc1700_LTCG_C",           // 0xD2
+		"Utc1700_LTCG_CPP",         // 0xD3
+		"Utc1700_LTCG_MSIL",        // 0xD4
+		"Utc1700_POGO_I_C",         // 0xD5
+		"Utc1700_POGO_I_CPP",       // 0xD6
+		"Utc1700_POGO_O_C",         // 0xD7
+		"Utc1700_POGO_O_CPP",       // 0xD8
+		"AliasObj1200",             // 0xD9
+		"Cvtpgd1800",               // 0xDA
+		"Cvtres1200",               // 0xDB
+		"Export1200",               // 0xDC
+		"Implib1200",               // 0xDD
+		"Linker1200",               // 0xDE
+		"Masm1200",                 // 0xDF
+		"Utc1800_C",                // 0xE0
+		"Utc1800_CPP",              // 0xE1
+		"Utc1800_CVTCIL_C",         // 0xE2
+		"Utc1800_CVTCIL_CPP",       // 0xE3
+		"Utc1800_LTCG_C",           // 0xE4
+		"Utc1800_LTCG_CPP",         // 0xE5
+		"Utc1800_LTCG_MSIL",        // 0xE6
+		"Utc1800_POGO_I_C",         // 0xE7
+		"Utc1800_POGO_I_CPP",       // 0xE8
+		"Utc1800_POGO_O_C",         // 0xE9
+		"Utc1800_POGO_O_CPP",       // 0xEA
+		"AliasObj1210",             // 0xEB
+		"Cvtpgd1810",               // 0xEC
+		"Cvtres1210",               // 0xED
+		"Export1210",               // 0xEE
+		"Implib1210",               // 0xEF
+		"Linker1210",               // 0xF0
+		"Masm1210",                 // 0xF1
+		"Utc1810_C",                // 0xF2
+		"Utc1810_CPP",              // 0xF3
+		"Utc1810_CVTCIL_C",         // 0xF4
+		"Utc1810_CVTCIL_CPP",       // 0xF5
+		"Utc1810_LTCG_C",           // 0xF6
+		"Utc1810_LTCG_CPP",         // 0xF7
+		"Utc1810_LTCG_MSIL",        // 0xF8
+		"Utc1810_POGO_I_C",         // 0xF9
+		"Utc1810_POGO_I_CPP",       // 0xFA
+		"Utc1810_POGO_O_C",         // 0xFB
+		"Utc1810_POGO_O_CPP",       // 0xFC
+		"AliasObj1400",             // 0xFD
+		"Cvtpgd1900",               // 0xFE
+		"Cvtres1400",               // 0xFF
+		"Export1400",               // 0x100
+		"Implib1400",               // 0x101
+		"Linker1400",               // 0x102
+		"Masm1400",                 // 0x103
+		"Utc1900_C",                // 0x104
+		"Utc1900_CPP",              // 0x105
+		"Utc1900_CVTCIL_C",         // 0x106
+		"Utc1900_CVTCIL_CPP",       // 0x107
+		"Utc1900_LTCG_C",           // 0x108
+		"Utc1900_LTCG_CPP",         // 0x109
+		"Utc1900_LTCG_MSIL",        // 0x10A
+		"Utc1900_POGO_I_C",         // 0x10B
+		"Utc1900_POGO_I_CPP",       // 0x10C
+		"Utc1900_POGO_O_C",         // 0x10D
+		"Utc1900_POGO_O_CPP"        // 0x10E
 	};
 
 	// Array of visualStudioNameIndex -> name of Visual Studio
@@ -334,7 +335,7 @@ namespace PeLib
 
 	// Key: Build number from RichHeader
 	// Value: Pair of { visualStudioNameIndex, visualStudioVersionString }
-	const std::map<size_t, std::pair<size_t, std::string>> visualStudioVersionMap
+ const std::unordered_map<size_t, std::pair<size_t, std::string>> visualStudioVersionMap
 	{
 		{  2204, {  0, "1.0 beta 1"             } }, //   0
 		{  2914, {  0, "1.0 beta 2"             } }, //   1
@@ -739,7 +740,9 @@ namespace
 		// Product ID can be mapped to Product name 1:1. Just check if the ID is in range.
 		record.ProductName = (record.ProductId < productNames.size()) ? productNames[record.ProductId] : "Unknown";
 
-		// Estimate the Visual Studio version
+		// We can very well match build number to a Visual Studio build.
+		// Exclude Visual Studio 2005 (v8.0), which has the same build number like Visual Studio 2012 (v11.0)
+		// If the product ID is above 0x83, then it's clearly Visual Studio 2012.
 		if (!(record.ProductId >= 0x83 && record.ProductBuild == 50727))
 		{
 			auto search = visualStudioVersionMap.find(record.ProductBuild);
@@ -755,13 +758,13 @@ namespace
 			}
 		}
 
-		// If the Visual Studio was not known yet, estimage its version by the ProductID range
+		// If the Visual Studio was not known yet, estimate its version from the ProductID range
 		if (record.VisualStudioName.empty())
 		{
-			uint16_t ProductIdRange[] = { 0x5A, 0x6D, 0x83, 0x97, 0x98, 0xB5, 0xC7, 0xD9, 0xEB, 0xFD };
+			std::array<uint32_t, 10> ProductIdRange = { 0x5A, 0x6D, 0x83, 0x97, 0x98, 0xB5, 0xC7, 0xD9, 0xEB, 0xFD };
 
 			// Find the group by the product ID
-			for (int index = _countof(ProductIdRange) - 1; index >= 0; index--)
+			for (int index = ProductIdRange.size() - 1; index >= 0; index--)
 			{
 				if (record.ProductId >= ProductIdRange[index])
 				{
