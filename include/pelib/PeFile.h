@@ -210,6 +210,10 @@ namespace PeLib
 		  int readDelayImportDirectory() ;
 		  /// Reads the security directory of the current file.
 		  int readSecurityDirectory() ;
+
+		  /// Checks the entry point code
+		  LoaderError checkEntryPointErrors() const;
+
 		  /// Returns a loader error, if there was any
 		  LoaderError loaderError() const;
 
@@ -696,6 +700,35 @@ namespace PeLib
 		return ERROR_DIRECTORY_DOES_NOT_EXIST;
 	}
 
+	template<int bits>
+	LoaderError PeFileT<bits>::checkEntryPointErrors() const
+	{
+		unsigned int uiEntryPointRva = peHeader().getAddressOfEntryPoint();
+		std::uint64_t uiOffset = peHeader().rvaToOffset(uiEntryPointRva);
+		std::uint64_t entryPointCode[2];
+
+		std::uint64_t ulFileSize = fileSize(m_iStream);
+		if(uiOffset > ulFileSize)
+		{
+			return LDR_ERROR_ENTRY_POINT_OUT_OF_IMAGE;
+		}
+
+		if ((uiOffset + sizeof(entryPointCode)) < ulFileSize)
+		{
+			// Read the entry point code
+			m_iStream.seekg(uiOffset, std::ios::beg);
+			m_iStream.read((char *)entryPointCode, sizeof(entryPointCode));
+
+			// If the entire code is zeroed, report the error
+			if ((entryPointCode[0] | entryPointCode[1]) == 0)
+			{
+				return LDR_ERROR_ENTRY_POINT_ZEROED;
+			}
+		}
+
+		return LDR_ERROR_NONE;
+	}
+
 	// Returns an error code indicating loader problem. We check every part of the PE file
 	// for possible loader problem. If anything wrong was found, we report it
 	template<int bits>
@@ -725,6 +758,11 @@ namespace PeLib
 
 		// Check errors in resource directory
 		ldrError = resDir().loaderError();
+		if (ldrError != LDR_ERROR_NONE)
+			return ldrError;
+
+		// Check errors in entry point
+		ldrError = checkEntryPointErrors();
 		if (ldrError != LDR_ERROR_NONE)
 			return ldrError;
 
