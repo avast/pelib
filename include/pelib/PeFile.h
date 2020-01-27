@@ -707,22 +707,30 @@ namespace PeLib
 		std::uint64_t uiOffset = peHeader().rvaToOffset(uiEntryPointRva);
 		std::uint64_t entryPointCode[2];
 
+		// No point of reading entry point that is beyond the file size
 		std::uint64_t ulFileSize = fileSize(m_iStream);
-		if(uiOffset > ulFileSize)
+		if (uiOffset > ulFileSize)
 		{
 			return LDR_ERROR_ENTRY_POINT_OUT_OF_IMAGE;
 		}
 
-		if ((uiOffset + sizeof(entryPointCode)) < ulFileSize)
+		// Only check PE files compiled for i386 or x64 processors.
+		if (peHeader().getMachine() == PELIB_IMAGE_FILE_MACHINE_I386 || peHeader().getMachine() == PELIB_IMAGE_FILE_MACHINE_AMD64)
 		{
-			// Read the entry point code
-			m_iStream.seekg(uiOffset, std::ios::beg);
-			m_iStream.read((char *)entryPointCode, sizeof(entryPointCode));
-
-			// If the entire code is zeroed, report the error
-			if ((entryPointCode[0] | entryPointCode[1]) == 0)
+			// Check if 16 bytes of code are available in the file
+			if ((uiOffset + sizeof(entryPointCode)) < ulFileSize)
 			{
-				return LDR_ERROR_ENTRY_POINT_ZEROED;
+				// Read the entry point code
+				m_iStream.seekg(uiOffset, std::ios::beg);
+				m_iStream.read((char *)entryPointCode, sizeof(entryPointCode));
+
+				// Zeroed instructions at entry point map either to "add [eax], al" (i386) or "add [rax], al" (AMD64).
+				// Neither of these instructions makes sense on the entry point. We check 16 bytes of the entry point,
+				// in order to make sure it's really a corruption.
+				if ((entryPointCode[0] | entryPointCode[1]) == 0)
+				{
+					return LDR_ERROR_ENTRY_POINT_ZEROED;
+				}
 			}
 		}
 

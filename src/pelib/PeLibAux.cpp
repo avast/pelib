@@ -74,7 +74,7 @@ namespace PeLib
 		// Resource directory detected errors
 		{"LDR_ERROR_RSRC_OVER_END_OF_IMAGE",       "Array of resource directory entries goes beyond end of the image" },
 
-		// Entry point dete
+		// Entry point error detection
 		{"LDR_ERROR_ENTRY_POINT_OUT_OF_IMAGE",     "The position of the entry point is out of the image" },
 		{"LDR_ERROR_ENTRY_POINT_ZEROED",           "The entry point is zeroed; probably damaged file" },
 	};
